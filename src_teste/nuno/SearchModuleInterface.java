@@ -1,5 +1,4 @@
-package src;
-
+package src_teste.nuno;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.HashSet;

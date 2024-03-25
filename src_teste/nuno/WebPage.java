@@ -1,4 +1,4 @@
-package src;
+package src_teste.nuno;
 
 import java.io.Serializable;
 //import java.util.ArrayList;

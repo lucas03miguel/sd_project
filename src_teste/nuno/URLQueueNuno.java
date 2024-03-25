@@ -1,4 +1,4 @@
-package src;
+package src_teste.nuno;
 
 import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
- * URLQueue Main Class
+ * URLQueueNuno Main Class
  */
-public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
+public class URLQueueNuno extends UnicastRemoteObject implements URLQueueInterface_nuno {
     
     private Queue<String> queue;
     private HashSet<String> urls;
@@ -21,10 +21,10 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
     private int downloaderCount;
     
     /**
-     * URLQueue constructor
+     * URLQueueNuno constructor
      * @throws RemoteException
      */
-    public URLQueue() throws RemoteException {
+    public URLQueueNuno() throws RemoteException {
         super();
         this.queue = new LinkedList<String>();
         this.urls = new HashSet<>();
@@ -57,19 +57,19 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
     }
     
     /**
-     * Add downloader to URLQueue.downloaderList.
+     * Add downloader to URLQueueNuno.downloaderList.
      * @param downloader downloader to add
      * @return downloader number
      */
     public int subscribeDownloader(DownloaderInterface downloader) throws RemoteException {
         this.downloaderList.add(new DownloaderWrapper(downloader));
-        System.out.println("[URLQueue] Downloader " +  downloaderCount + " subscribed !");
+        System.out.println("[URLQueueNuno] Downloader " +  downloaderCount + " subscribed !");
         this.downloaderCount++;
         return this.downloaderCount-1;
     }
     
     /**
-     * Checks the Downloader.Heartbeat() on URLQueue.downloaderList index i.
+     * Checks the Downloader.Heartbeat() on URLQueueNuno.downloaderList index i.
      * @param i index
      */
     public void checkDownloader(int i) throws RemoteException {
@@ -83,14 +83,14 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
     }
     
     /**
-     * @return URLQueue.downloaderList size.
+     * @return URLQueueNuno.downloaderList size.
      */
     public int getDownloaderListSize() throws RemoteException {
         return this.downloaderList.size();
     }
     
     /**
-     * @return Number of ACTIVE downloaders on URLQueue.downloaderList
+     * @return Number of ACTIVE downloaders on URLQueueNuno.downloaderList
      */
     public int getNumberActiveDownloaders() throws RemoteException {
         int sum = 0;
@@ -121,11 +121,11 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
      */
     public static void main(String[] args) throws RemoteException {
         try{
-            System.out.println("[URLQueue] Turning on... ");
-            URLQueueInterface qi = new URLQueue();
+            System.out.println("[URLQueueNuno] Turning on... ");
+            URLQueueInterface_nuno qi = new URLQueueNuno();
             Registry r = LocateRegistry.createRegistry(9871);
-            r.rebind("URLQueue", qi);
-            System.out.println("[URLQueue] RMI Server ready !");
+            r.rebind("URLQueueNuno", qi);
+            System.out.println("[URLQueueNuno] RMI Server ready !");
             
             while(true){
                 for(int i = 0; i < qi.getDownloaderListSize(); i++){
@@ -136,9 +136,9 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
             }
             
         } catch(RemoteException re) {
-            System.out.println("[URLQueue] Remote Exception in main: " + re);
+            System.out.println("[URLQueueNuno] Remote Exception in main: " + re);
         } catch (Exception e) {
-            System.out.println("[URLQueue] Exception in main: " + e);
+            System.out.println("[URLQueueNuno] Exception in main: " + e);
         }
     }
 }

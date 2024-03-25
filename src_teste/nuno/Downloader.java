@@ -1,4 +1,4 @@
-package src;
+package src_teste.nuno;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -30,7 +30,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderInterfa
     private static int PORT = 4321;
     private MulticastSocket socket;
     private InetAddress group;
-    private URLQueueInterface queue;
+    private URLQueueInterface_nuno queue;
     
     private int downloaderID;
     private int packetID;
@@ -42,10 +42,10 @@ public class Downloader extends UnicastRemoteObject implements DownloaderInterfa
      * Downloader constructor
      * @param s Multicast Socket
      * @param g Inet Address
-     * @param q URLQueueInterface
+     * @param q URLQueueInterface_nuno
      * @throws RemoteException
      */
-    public Downloader(MulticastSocket s, InetAddress g, URLQueueInterface q) throws RemoteException {
+    public Downloader(MulticastSocket s, InetAddress g, URLQueueInterface_nuno q) throws RemoteException {
         super();
         this.socket = s;
         this.group = g;
@@ -66,7 +66,7 @@ public class Downloader extends UnicastRemoteObject implements DownloaderInterfa
     }
     
     /**
-     * Used as checker by URLQueue.
+     * Used as checker by URLQueueNuno.
      * @return true
      */
     public boolean Heartbeat() throws RemoteException {
@@ -230,14 +230,14 @@ public class Downloader extends UnicastRemoteObject implements DownloaderInterfa
             socket = new MulticastSocket(PORT);
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             
-            URLQueueInterface queue = (URLQueueInterface) LocateRegistry.getRegistry(9871).lookup("URLQueue");
-            System.out.println("[Downloader] Connected to URLQueue !");
+            URLQueueInterface_nuno queue = (URLQueueInterface_nuno) LocateRegistry.getRegistry(9871).lookup("URLQueueNuno");
+            System.out.println("[Downloader] Connected to URLQueueNuno !");
             Downloader d = new Downloader(socket,group,queue);
             d.setNumber(queue.subscribeDownloader((DownloaderInterface) d));
             System.out.println("[Downloader] I'm ready !");
             
         } catch(RemoteException re){
-            System.out.println("[Downloader] Remote Exception: Cannot connect to URLQueue");
+            System.out.println("[Downloader] Remote Exception: Cannot connect to URLQueueNuno");
         } catch(Exception e){
             System.out.println("[Downloader] Exception in main: " + e);
         } finally {

@@ -1,10 +1,10 @@
-package src;
+package src_teste.nuno;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.HashSet;
 
-public interface URLQueueInterface extends Remote {
+public interface URLQueueInterface_nuno extends Remote {
     public void addUrl(String url) throws RemoteException;
     public String getUrl() throws RemoteException;
     public int subscribeDownloader(DownloaderInterface downloader) throws RemoteException;

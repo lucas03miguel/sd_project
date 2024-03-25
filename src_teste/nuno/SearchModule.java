@@ -1,4 +1,4 @@
-package src;
+package src_teste.nuno;
 
 import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
@@ -17,7 +17,7 @@ import java.util.HashMap;
  */
 public class SearchModule extends UnicastRemoteObject implements SearchModuleInterface {
     
-    private URLQueueInterface queue;
+    private URLQueueInterface_nuno queue;
     private ArrayList<ISBWrapper> isbList;
     private int isbCount;
     private HashMap<String , Integer> topSearchs;
@@ -26,7 +26,7 @@ public class SearchModule extends UnicastRemoteObject implements SearchModuleInt
     
     /**
      * Search Module constructor.
-     * Connects to the URLQueue.
+     * Connects to the URLQueueNuno.
      * @throws RemoteException
      */
     public SearchModule() throws RemoteException{
@@ -37,10 +37,10 @@ public class SearchModule extends UnicastRemoteObject implements SearchModuleInt
         this.activeISBs = 0;
         this.activeDownloaders = 0;
         try{
-            this.queue = (URLQueueInterface) LocateRegistry.getRegistry(9871).lookup("URLQueue");
-            System.out.println("[SearchModule] Connected to URLQueue");
+            this.queue = (URLQueueInterface_nuno) LocateRegistry.getRegistry(9871).lookup("URLQueueNuno");
+            System.out.println("[SearchModule] Connected to URLQueueNuno");
         } catch(RemoteException re) {
-            System.out.println("[SearchModule] Remote Exception: Cannot connect to URLQueue");
+            System.out.println("[SearchModule] Remote Exception: Cannot connect to URLQueueNuno");
         } catch(Exception e) {
             System.out.println("[SearchModule] Exception in constructor " + e);
         }
@@ -109,7 +109,7 @@ public class SearchModule extends UnicastRemoteObject implements SearchModuleInt
     }
     
     /**
-     * Index a new url on URLQueue.
+     * Index a new url on URLQueueNuno.
      * @param url url to index
      */
     public void index_new_url(String url) throws RemoteException{

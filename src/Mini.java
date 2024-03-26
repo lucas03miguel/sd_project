@@ -14,7 +14,7 @@ public class Mini {
             Document doc = Jsoup.connect(url).get();
             StringTokenizer tokens = new StringTokenizer(doc.text());
             int countTokens = 0;
-            while (tokens.hasMoreElements() && countTokens++ < 100)
+            while (tokens.hasMoreElements())
                 System.out.println(tokens.nextToken().toLowerCase());
             Elements links = doc.select("a[href]");
             for (Element link : links)

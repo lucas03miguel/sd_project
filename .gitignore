@@ -1,6 +1,7 @@
 .idea
 out
 .vscode
-src_teste/
 src/*.class
 src/interfaces/*.class
+src_teste/
+!src_teste/Mini.java

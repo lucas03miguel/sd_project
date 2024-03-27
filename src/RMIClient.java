@@ -18,72 +18,64 @@ public class RMIClient extends UnicastRemoteObject {
     private final int rmiPort;
     private final String rmiRegistryName;
     private final Client client;
-    private static RMIServerInterface serverInterface;
+    private RMIServerInterface serverInterface;
     
-    RMIClient(String rmiHost, int rmiPort, String rmiRegistryName, Client client, RMIServerInterface serverInterface) throws RemoteException {
+    public RMIClient(String rmiHost, int rmiPort, String rmiRegistryName, Client client, RMIServerInterface serverInterface) throws RemoteException {
         super();
         this.rmiHost = rmiHost;
         this.rmiPort = rmiPort;
         this.rmiRegistryName = rmiRegistryName;
         this.client = client;
         this.serverInterface = serverInterface;
-    }
-    
-    /*
-    public void run(){
         
-        String a;
-        
-        try (Scanner sc = new Scanner(System.in)) {
-            //User user = new User();
-            //subscribe on gateway
-            h.subscribe((RMIClientInterface) this);
-            System.out.println("Client sent subscription to server");
+        try {
+            System.out.println("[CLIENT] Configuração: " + rmiHost + ":" + rmiPort + " " + rmiRegistryName);
+            System.out.println("[CLIENT] Conectado!!!");
             
-            while (true) {
-                System.out.print("> ");
-                a = sc.nextLine();
-                h.pesquisa(a);
-            }
-            
-        } catch (Exception e) {
-            System.out.println("Exception in main: " + e);
+            run();
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
+        
+        run();
+        
     }
-     */
     
     
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
         
-        String rmiHost = "127.0.0.1";
-        int rmiPort = 7000;
-        String rmiRegistryName = "//127.0.0.1:7000/OPyThaOn";
-        
         try {
-            System.out.println("[CLIENT] Configuração: " + rmiHost + ":" + rmiPort + " " + rmiRegistryName);
-            RMIServerInterface svInterface = (RMIServerInterface) Naming.lookup(rmiRegistryName);
-            System.out.println("[CLIENT] Conectado!!!");
-            
-            Client client = new Client("Anon", false);
-            RMIClient rmi_client = new RMIClient(rmiHost, rmiPort, rmiRegistryName, client, svInterface);
-            //rmi_client.menu();
-            Scanner sc = new Scanner(System.in);
+            String rmiHost = "127.0.0.1";
+            int rmiPort = 7000;
+            String rmiRegistryName = "OPyThaOn";
+            Client client = new Client("Antonio", false);
+            //RMIServerInterface svInterface = (RMIServerInterface) Naming.lookup(rmiRegistryName);
+            RMIServerInterface svInterface = (RMIServerInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
+            new RMIClient(rmiHost, rmiPort, rmiRegistryName, client, svInterface);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        
+    }
+    
+    public void run(){
+        try (Scanner sc = new Scanner(System.in)) {
             while (true) {
                 System.out.print("> ");
                 String a = sc.nextLine();
                 serverInterface.pesquisa(a);
             }
-        }catch (Exception ex){
-            ex.printStackTrace();
+            
+        } catch (Exception e) {
+            System.out.println("[EXCEPTION] Exceção na main: " + e);
         }
-        
-        
-        
     }
+    
     public void atualizaAdminPage(String s) throws RemoteException {
         System.out.println("> " + s);
     }
+    
     private void serverErrorHandling() {
         System.out.println("[EXCEPTION] Não conseguiu conectar ao server.");
         while (true) {

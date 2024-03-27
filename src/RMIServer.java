@@ -8,45 +8,74 @@ import java.rmi.*;
 import java.rmi.server.*;
 import java.rmi.registry.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 
+import static java.lang.Thread.sleep;
+
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
-    //static Hello_C_I client;
-    
-    //private IClient clientCallback;
-    
     public ArrayList<RMIClientInterface> clientes;
+    public RMIServerInterface host;
     
-    public RMIServer() throws RemoteException {
+    public RMIServer(RMIServerInterface hPrincipal/*, String bRMIregistry, String bRMIhost, int bRMIport, String uRMIregistry, String uRMIhost, int uRMIport*/) throws RemoteException {
         super();
-        clientes = new ArrayList<>();
         
+        this.host = hPrincipal;
+        this.clientes = new ArrayList<>();
+        /*
+        this.bRMIregistry = bRMIregistry;
+        this.bRMIhost = bRMIhost;
+        this.bRMIport = bRMIport;
         
-        try {
-            LocateRegistry.createRegistry(7000);
-            System.setProperty("java.rmi.server.hostname", "192.168.1.100");
-            Naming.rebind("//192.168.1.100:7000/OPyThaOn", this);
-    
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
+        this.uRMIregistry = uRMIregistry;
+        this.uRMIhost = uRMIhost;
+        this.uRMIport = uRMIport;
+         */
+        
+        int rmiPort = 7000;
+        String rmiHost = "192.168.1.100";
+        String rmiRegistryName = "OPyThaOn";
+        while (true) {
+            try {
+                Registry r = LocateRegistry.createRegistry(rmiPort);
+                System.setProperty("java.rmi.server.hostname", rmiHost);
+                r.rebind(rmiRegistryName, this);
+                System.out.println("[SERVER] Running on " + rmiHost + ":" + rmiPort + "->" + rmiRegistryName);
+                
+                run();
+            } catch (Exception e) {
+                System.out.println("[EXCEPTION] Nao conseguiu criar registry. A tentar novamente num segundo...");
+                try {
+                    sleep(1000);
+                    this.host = (RMIServerInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
+                    //his.backUpCreate(rmiPort, rmiHost, rmiRegistryName); //barrels
+                } catch (InterruptedException | NotBoundException e2) {
+                    System.out.println("[EXCEPTION] " + e2);
+                    return;
+                }
+            }
         }
-        run();
     }
     
-    public void run(){
-        
-        String a;
+    public void run() {
         try (Scanner sc = new Scanner(System.in)) {
-            //User user = new User();
-            System.out.println("Hello Server ready.");
+            System.out.println("[SERVER] Server preparado.");
             while (true) {
-                System.out.print("> ");
-                a = sc.nextLine();
+                String a = sc.nextLine();
                 this.print_on_all_clients(a);
-                //client.print_on_client(a);
             }
         } catch (Exception re) {
-            System.out.println("Exception in HelloImpl.main: " + re);
+            System.out.println("Exception in RMIServer.main: " + re);
+        }
+    }
+    
+    public static void main(String[] args) {
+		System.getProperties().put("java.security.policy", "policy.all");
+        
+        try {
+            new RMIServer(null);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
     
@@ -56,7 +85,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
     
     public void print_on_all_clients(String s){
-        for (RMIClientInterface c:clientes) {
+        for (RMIClientInterface c: clientes) {
             try {
                 c.atualizaAdminPage(s);
             } catch (RemoteException e) {
@@ -70,23 +99,5 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         System.out.print("client subscribed");
         //client = c;
         clientes.add(c);
-    }
-    
-    // =======================================================
-    
-    public static void main(String[] args) {
-        //String a;
-
-		System.getProperties().put("java.security.policy", "policy.all");
-		/*
-		System.setSecurityManager(new RMISecurityManager());
-		*/
-        try {
-            
-            new RMIServer();
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
-        
     }
 }

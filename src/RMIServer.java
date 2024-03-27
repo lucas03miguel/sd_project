@@ -21,10 +21,12 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         super();
         clientes = new ArrayList<>();
         
-        LocateRegistry.createRegistry(1099);
         
         try {
-            Naming.rebind("OPyThaOn", (RMIServerInterface) this);
+            LocateRegistry.createRegistry(7000);
+            System.setProperty("java.rmi.server.hostname", "192.168.1.100");
+            Naming.rebind("//192.168.1.100:7000/OPyThaOn", this);
+    
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
@@ -72,16 +74,16 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     
     // =======================================================
     
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         //String a;
 
-		/*
 		System.getProperties().put("java.security.policy", "policy.all");
+		/*
 		System.setSecurityManager(new RMISecurityManager());
 		*/
         try {
             
-            RMIServer h = new RMIServer();
+            new RMIServer();
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }

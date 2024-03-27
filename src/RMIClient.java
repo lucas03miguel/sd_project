@@ -54,11 +54,11 @@ public class RMIClient extends UnicastRemoteObject {
     
     
     public static void main(String[] args) {
-		System.getProperties().put("java.security.policy", "policy.all");
-    
+        System.getProperties().put("java.security.policy", "policy.all");
+        
         String rmiHost = "127.0.0.1";
-        int rmiPort = 1099;
-        String rmiRegistryName = "OPyThaOn";
+        int rmiPort = 7000;
+        String rmiRegistryName = "//127.0.0.1:7000/OPyThaOn";
         
         try {
             System.out.println("[CLIENT] Configuração: " + rmiHost + ":" + rmiPort + " " + rmiRegistryName);
@@ -90,7 +90,7 @@ public class RMIClient extends UnicastRemoteObject {
             try {
                 System.out.println("[CLIENT] Tentando reconectar...");
                 //Thread.sleep(keepAliveTime);
-                this.serverInterface = (RMIServerInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
+                serverInterface = (RMIServerInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
                 
                 System.out.println("[CLIENT] Reconectado!");
                 //this.menu();
@@ -100,20 +100,4 @@ public class RMIClient extends UnicastRemoteObject {
             }
         }
     }
-}
-class Client implements Serializable {
-    private final String username;
-    private final boolean isAdmin;
-    public Client(String username, boolean admin){
-        this.username = username;
-        this.isAdmin = admin;
-    }
-    
-    public String getUsername() {
-        return username;
-    }
-    public boolean isAdmin() {
-        return isAdmin;
-    }
-    
 }

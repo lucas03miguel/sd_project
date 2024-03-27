@@ -2,3 +2,5 @@
 out
 .vscode
 src_teste/
+src/*.class
+src/interfaces/*.class

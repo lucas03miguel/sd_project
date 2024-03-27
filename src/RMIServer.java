@@ -1,16 +1,20 @@
 package src;
 
-import src.interfaces.RMIServerInterface;
 import src.interfaces.RMIClientInterface;
+import src.interfaces.RMIServerInterface;
+
 import java.net.MalformedURLException;
-import java.rmi.Naming;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.server.UnicastRemoteObject;
+import java.rmi.*;
+import java.rmi.server.*;
+import java.rmi.registry.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
+    //static Hello_C_I client;
+    
+    //private IClient clientCallback;
+    
     public ArrayList<RMIClientInterface> clientes;
     
     public RMIServer() throws RemoteException {
@@ -20,7 +24,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         LocateRegistry.createRegistry(1099);
         
         try {
-            Naming.rebind("XPTO", (RMIServerInterface)this);
+            Naming.rebind("OPyThaOn", (RMIServerInterface) this);
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
@@ -32,7 +36,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         String a;
         try (Scanner sc = new Scanner(System.in)) {
             //User user = new User();
-            System.out.println("[RMI SERVER] Server ready");
+            System.out.println("Hello Server ready.");
             while (true) {
                 System.out.print("> ");
                 a = sc.nextLine();
@@ -40,7 +44,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                 //client.print_on_client(a);
             }
         } catch (Exception re) {
-            System.out.println("Exception in RMIServer.main: " + re);
+            System.out.println("Exception in HelloImpl.main: " + re);
         }
     }
     
@@ -76,6 +80,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
 		System.setSecurityManager(new RMISecurityManager());
 		*/
         try {
+            
             RMIServer h = new RMIServer();
         } catch (RemoteException e) {
             throw new RuntimeException(e);

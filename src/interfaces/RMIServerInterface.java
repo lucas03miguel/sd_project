@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public interface RMIServerInterface extends Remote {
+    /*
     boolean alive() throws RemoteException;
     
     boolean indexNewUrl(String url) throws RemoteException;
@@ -25,4 +26,8 @@ public interface RMIServerInterface extends Remote {
     
     ArrayList<String> getAliveBarrels() throws RemoteException;
     ArrayList<String> getAliveCrawlers() throws RemoteException;
+    */
+    void pesquisa(String a) throws RemoteException;
+    
+    void subscribe(RMIClientInterface rmiClientInterface) throws RemoteException;
 }

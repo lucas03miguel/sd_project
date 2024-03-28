@@ -67,35 +67,39 @@ public class RMIClient extends UnicastRemoteObject {
         
     }
 
-    private void printMenus(int userType) {
+    private void printMenu(int userType) {
+        System.out.println("\n### Menu ###");
+        
         // login or register
         if (userType == 0) {
-            System.out.println("\n### Login Menu ###\n1.Search Links\n2.Index New URL\n  3.Login\n  4.Register\n  e.Exit\n --> Choice: ");
-            return;
+            System.out.println("1. Search Links");
+            System.out.println("2. Index New URL");
+            System.out.println("3. Login");
+            System.out.println("4. Register");
+            // admin - main menu
+        } else if (userType == 1) {
+            System.out.println("1. Search Links");
+            System.out.println("2. Index New URL");
+            System.out.println("3. Barrels List");
+            System.out.println("4. Downloaders List");
+            System.out.println("5. Top 10 searches");
+            System.out.println("6. Logout");
+            // user - main menu
+        } else if (userType == 2) {
+            System.out.println("1. Search Links");
+            System.out.println("2. Index New URL");
+            System.out.println("3. Logout");
         }
-        // admin - main menu
-        else if (userType == 1) {
-            System.out.print("\n### Admin Panel ###\n1.Search Links\n2.Index New URL\n3.Barrels List\n4.Downloaders List\n5.Top 10 searches\n  6.Logout\n  e.Exit\n --> Choice: ");
-            return;
-        }
-
-        // user - main menu
-        else if (userType == 2) {
-            System.out.print("\n### User Panel ###\n1.Search Links\n2.Index New URL\n  3.Logout\n  e.Exit\n --> Choice: ");
-            return;
-        }
-
-        else {
-            System.out.println("Invalid user type");
-        }
-
+        
+        System.out.println("e. Exit");
+        System.out.print("--> Choice: ");
     }
-
+    
     private void menu() {
         try (Scanner sc = new Scanner(System.in)) {
             int userType = 0;
             while (true) {
-                printMenus(userType);
+                printMenu(userType);
                 String choice = sc.nextLine();
                 switch (choice) {
                     case "1":
@@ -111,32 +115,42 @@ public class RMIClient extends UnicastRemoteObject {
                         //serverInterface.indexar(url);
                         break;
                     case "3":
-                        System.out.println("### Login ###");
-                        System.out.print("Enter username: ");
-                        String username = sc.nextLine();
-                        System.out.print("Enter password: ");
-                        String password = sc.nextLine();
-                        //userType = serverInterface.login(username, password);
+                        if (userType == 0) {
+                            System.out.println("### Login ###");
+                            System.out.print("Enter username: ");
+                            String username = sc.nextLine();
+                            System.out.print("Enter password: ");
+                            String password = sc.nextLine();
+                            //userType = serverInterface.login(username, password);
+                        } else {
+                            System.out.println("### Logout ###");
+                            userType = 0;
+                        }
                         break;
                     case "4":
-                        System.out.println("### Register ###");
-                        System.out.print("Enter username: ");
-                        String regUsername = sc.nextLine();
-                        System.out.print("Enter password: ");
-                        String regPassword = sc.nextLine();
-                        //userType = serverInterface.register(regUsername, regPassword);
+                        if (userType == 0) {
+                            System.out.println("### Register ###");
+                            System.out.print("Enter username: ");
+                            String regUsername = sc.nextLine();
+                            System.out.print("Enter password: ");
+                            String regPassword = sc.nextLine();
+                            //userType = serverInterface.register(regUsername, regPassword);
+                        } else if (userType == 1) {
+                            System.out.println("### Downloaders List ###");
+                            //serverInterface.downloadersList();
+                        }
                         break;
                     case "5":
-                        System.out.println("### Barrels List ###");
-                        //serverInterface.barrelsList();
+                        if (userType == 1) {
+                            System.out.println("### Top 10 searches ###");
+                            //serverInterface.top10();
+                        }
                         break;
                     case "6":
-                        System.out.println("### Downloaders List ###");
-                        //serverInterface.downloadersList();
-                        break;
-                    case "7":
-                        System.out.println("### Top 10 searches ###");
-                        //serverInterface.top10();
+                        if (userType == 1) {
+                            System.out.println("### Logout ###");
+                            userType = 0;
+                        }
                         break;
                     case "e":
                         System.out.println("Exiting...");
@@ -150,8 +164,8 @@ public class RMIClient extends UnicastRemoteObject {
         } catch (Exception e) {
             System.out.println("[EXCEPTION] Exceção na main: " + e);
         }
-        
     }
+    
 
     
     public void run(){

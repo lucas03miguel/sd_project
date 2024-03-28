@@ -6,13 +6,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public interface RMIServerInterface extends Remote {
+    ArrayList<String> checkLogin(String username, String password) throws RemoteException;
     /*
     boolean alive() throws RemoteException;
     
     boolean indexNewUrl(String url) throws RemoteException;
     
     boolean isLoggedIn(String username) throws RemoteException;
-    ArrayList<String> checkLogin(String username, String password) throws RemoteException;
     ArrayList<String> checkRegister(String username, String password, String firstName, String lastName) throws RemoteException;
     boolean logout(String username) throws RemoteException;
     boolean isAdmin(String username) throws RemoteException;

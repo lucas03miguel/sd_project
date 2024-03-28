@@ -75,6 +75,36 @@ public class RMIClient extends UnicastRemoteObject {
         }
     }
     
+    private void login(BufferedReader br) throws RemoteException {
+        String username = "", pwd = "";
+    
+        while (username.length() < 4 || username.length() > 20 || pwd.length() < 4 || pwd.length() > 20) {
+            System.out.print("Enter username (4-20 characters): ");
+            try {
+                username = br.readLine();
+            } catch (IOException e) {
+                System.out.println("Error reading username: " + e.getMessage());
+                continue;
+            }
+    
+            System.out.print("Enter password (4-20 characters): ");
+            try {
+                pwd = br.readLine();
+            } catch (IOException e) {
+                System.out.println("Error reading password: " + e.getMessage());
+                continue;
+            }
+    
+            if (username.length() < 4 || username.length() > 20) {
+                System.out.println("Username must be between 4 and 20 characters.");
+            }
+    
+            if (pwd.length() < 4 || pwd.length() > 20) {
+                System.out.println("Password must be between 4 and 20 characters.");
+            }
+        }
+    }
+    
     private void printMenu(int userType) {
         System.out.println("\n----Menu----");
         

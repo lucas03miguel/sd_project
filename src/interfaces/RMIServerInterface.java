@@ -30,4 +30,5 @@ public interface RMIServerInterface extends Remote {
     void pesquisa(String a) throws RemoteException;
     
     void subscribe(RMIClientInterface rmiClientInterface) throws RemoteException;
+    //boolean ping() throws RemoteException;
 }

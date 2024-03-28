@@ -100,4 +100,11 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         //client = c;
         clientes.add(c);
     }
+    
+    /*
+    @Override
+    public boolean ping() throws RemoteException {
+        return true;
+    }
+    */
 }

@@ -9,6 +9,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.Buffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.rmi.*;
 import java.rmi.server.*;
 import java.rmi.registry.*;
@@ -137,7 +140,30 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         return new ArrayList<>(Arrays.asList("true", pass, message));
         */
         int validLogins = 0;
-        String filePath = "../files/users.txt";
+        String filePath = "./files/users.txt";
+    
+        Path dirPath = Path.of("./files");
+        if (!Files.exists(dirPath)) {
+            try {
+                Files.createDirectories(dirPath);
+                System.out.println("Diretório de users criado: " + dirPath);
+            } catch (Exception e) {
+                System.err.println("Erro ao criar o diretório de users: " + e);
+                return -1;
+            }
+        }
+        
+        Path path = Paths.get(filePath);
+        if (!Files.exists(path)) {
+            try {
+                Files.createFile(path);
+                System.out.println("Ficheiro de users criado: " + filePath);
+            } catch (Exception e) {
+                System.err.println("Erro ao criar o ficheiro de users: " + e);
+                e.printStackTrace();
+                return -1;
+            }
+        }
     
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
@@ -145,15 +171,14 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                 String[] parts = line.split(" ");
                 if (parts.length == 2 && parts[0].equals(username) && parts[1].equals(password)) {
                     validLogins = 1;
-                    // TODO: adicionar o user à database e tals i guess
                     break;
                 }
             }
         } catch (Exception e) {
-            System.out.println("Erro ao tentar ler o arquivo de users: " + e);
+            System.err.println("Erro ao ler do ficheiro de users: " + e);
             return -1;
         }
-    
+        
         return validLogins;
     }
 

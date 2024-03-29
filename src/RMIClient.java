@@ -158,24 +158,27 @@ public class RMIClient extends UnicastRemoteObject {
     }
     
     private void menu() {
-        BufferedReader brd = new BufferedReader(new InputStreamReader(System.in));
-        try {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             int userType = 0;
             while (true) {
                 if (userType == 0) {
                     printMenu(userType);
-                    String choice = brd.readLine();
+                    String choice = br.readLine();
                     
                     if (choice.equals("1")) {
                         String username = "", password = "";
-                        login(username, password);
-                        userType = 1;
+                        int resp = login(username, password, br);
+                        if (resp == -1) {
+                            System.out.println("A sair...");
+                            System.exit(0);
+                            break;
+                        } else if (resp == 1) userType = 1;
                     } else if (choice.equals("2")) {
                         System.out.println("----Registar----");
                         System.out.print("Username: ");
-                        String username = brd.readLine();
+                        String username = br.readLine();
                         System.out.print("Password: ");
-                        String password = brd.readLine();
+                        String password = br.readLine();
                         //userType = serverInterface.register(username, password);
                         userType = 1;
                     } else if (choice.equalsIgnoreCase("s")) {
@@ -189,29 +192,29 @@ public class RMIClient extends UnicastRemoteObject {
                 
                 if (userType == 1) {
                     printMenu(userType);
-                    String choice = brd.readLine();
+                    String choice = br.readLine();
                     System.out.println("----Logged in----");
                     
                     switch (choice) {
                         case "1":
                             System.out.println("<----Pesquisar---->");
                             System.out.print("Insira pesquisa: ");
-                            String searchQuery = brd.readLine();
+                            String searchQuery = br.readLine();
                             serverInterface.pesquisa(searchQuery);
                             break;
                         case "2":
                             System.out.println("<----Indexar novo URL---->");
                             System.out.print("Enter URL: ");
-                            String url = brd.readLine();
+                            String url = br.readLine();
                             //serverInterface.indexar(url);
                             break;
                         case "3":
                             if (userType == 0) {
                                 System.out.println("### Login ###");
                                 System.out.print("Enter username: ");
-                                String username = brd.readLine();
+                                String username = br.readLine();
                                 System.out.print("Enter password: ");
-                                String password = brd.readLine();
+                                String password = br.readLine();
                                 //userType = serverInterface.login(username, password);
                             } else {
                                 System.out.println("### Logout ###");
@@ -222,9 +225,9 @@ public class RMIClient extends UnicastRemoteObject {
                             if (userType == 0) {
                                 System.out.println("### Register ###");
                                 System.out.print("Enter username: ");
-                                String regUsername = brd.readLine();
+                                String regUsername = br.readLine();
                                 System.out.print("Enter password: ");
-                                String regPassword = brd.readLine();
+                                String regPassword = br.readLine();
                                 //userType = serverInterface.register(regUsername, regPassword);
                             } else if (userType == 1) {
                                 System.out.println("### Downloaders List ###");
@@ -259,48 +262,45 @@ public class RMIClient extends UnicastRemoteObject {
         }
     }
     
-    private void login(String username, String password) throws IOException {
-        System.out.println("----Login----");
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    private int login(String username, String password, BufferedReader br) throws IOException {
+        System.out.println("\n----Login----");
+        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         while (true) {
             try {
                 System.out.print("Username: ");
                 username = br.readLine();
+    
+                while (username.length() < 4 || username.length() > 20) {
+                    System.out.print("Username errado (3-20 carateres): ");
+                    username = br.readLine();
+                }
+            } catch (Exception e) {
+                System.out.println("[EXCEPTION] Erro ao ler o username: " + e);
+            }
+            
+            try {
                 System.out.print("Password: ");
                 password = br.readLine();
-            } catch (Exception e) {
-                System.out.println("[EXCEPTION] Erro: " + e);
-            }
-            
-            while (username.length() < 4 || username.length() > 20) {
-                System.out.print("Username errado (4-20 carateres): ");
-                try {
-                    username = br.readLine();
-                } catch (Exception e) {
-                    System.out.println("Erro a ler o username: " + e);
-                }
-            }
-            
-            while (password.length() < 1 || password.length() > 20) {
-                System.out.print("Password errrada (1-20 carateres): ");
-                try {
+    
+                while (password.length() < 1 || password.length() > 20) {
+                    System.out.print("Password errada (1-20 carateres): ");
                     password = br.readLine();
-                } catch (Exception e) {
-                    System.out.println("Erro a ler a password: " + e);
                 }
+            } catch (Exception e) {
+                System.out.println("[EXCEPTION] Erro ao ler a password: " + e);
             }
             
             int checked = this.serverInterface.checkLogin(username, password);
             if (checked == -1) {
                 System.out.println("[CLIENT] Login falhou: erro no servidor");
-                br.close();
-                return;
+                //br.close();
+                return -1;
             }
             
             if (checked == 1) {
                 System.out.println("[CLIENT] Login bem sucedido!");
-                br.close();
-                return;
+                //br.close();
+                return 1;
             } else {
                 System.out.println("[CLIENT] Login falhou: usuario ou senha errados");
                 
@@ -314,8 +314,8 @@ public class RMIClient extends UnicastRemoteObject {
                     }
                 } while (!choice.equalsIgnoreCase("s") && !choice.equalsIgnoreCase("n"));
                 if (choice.equalsIgnoreCase("n")) {
-                    br.close();
-                    return;
+                    //br.close();
+                    return 0;
                 }
             }
         }

@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public interface RMIServerInterface extends Remote {
-    ArrayList<String> checkLogin(String username, String password) throws RemoteException;
-    ArrayList<String> checkRegister(String username, String password) throws RemoteException;
+    int checkLogin(String username, String password) throws RemoteException;
+    //ArrayList<String> checkRegister(String username, String password) throws RemoteException;
     /*
     boolean alive() throws RemoteException;
     

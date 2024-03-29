@@ -115,7 +115,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
     */
 
-    public ArrayList<String> checkLogin(String username, String password) throws RemoteException {
+    public int checkLogin(String username, String password) throws RemoteException {
         //TODO: Modificar esta shit porque nao esta bem. temos que usar o fucking barril
         /*
         ArrayList<String> res = new ArrayList<>(Arrays.asList("true", "false", "Login successful"));
@@ -136,69 +136,73 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         // login successful and not admin
         return new ArrayList<>(Arrays.asList("true", pass, message));
         */
-        ArrayList<String> validLogins = new ArrayList<>();
+        int validLogins = 0;
         String filePath = "../files/users.txt";
     
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(" "); // Aqui assumimos que o nome de usuário e a senha são separados por um espaço
+                String[] parts = line.split(" ");
                 if (parts.length == 2 && parts[0].equals(username) && parts[1].equals(password)) {
-                    validLogins.add(username);
-                    break; // Encontrou um login válido, então pode parar de verificar
+                    validLogins = 1;
+                    // TODO: adicionar o user à database e tals i guess
+                    break;
                 }
             }
         } catch (Exception e) {
             System.out.println("Erro ao tentar ler o arquivo de users: " + e);
+            return -1;
         }
     
         return validLogins;
-        
-        
     }
 
+    /*
     public ArrayList<String> checkRegister(String username, String password) throws RemoteException {
-    ArrayList<String> res = new ArrayList<>();
-    String message = "";
-
-    try {
-        // Check if the username already exists in the file
-        File file = new File("users.txt");
-        //Scanner scanner = new Scanner(file);
-        BufferedReader scanner = new BufferedReader(new FileReader(file));
-        while (scanner.ready()) {
-            String line = scanner.readLine();
-            String[] parts = line.split(",");
-            if (parts[0].equals(username)) {
-                message = "Username already exists";
-                res.add("false");
-                res.add("false");
-                res.add(message);
-                return res;
+        ArrayList<String> res = new ArrayList<>();
+        String message = "";
+    
+        try {
+            // Check if the username already exists in the file
+            File file = new File("users.txt");
+            //Scanner scanner = new Scanner(file);
+            BufferedReader scanner = new BufferedReader(new FileReader(file));
+            while (scanner.ready()) {
+                String line = scanner.readLine();
+                String[] parts = line.split(",");
+                if (parts[0].equals(username)) {
+                    message = "Username already exists";
+                    res.add("false");
+                    res.add("false");
+                    res.add(message);
+                    return res;
+                }
             }
+            scanner.close();
+        
+            // Append the new user registration information to the file
+            FileWriter writer = new FileWriter(file, true);
+            writer.write(username + "," + password + "," + "\n");
+            writer.close();
+        
+            message = "Registration successful";
+            res.add("true");
+            res.add(message);
+        
+            Client c = new Client(username, false);
+            //this.updateClient(username, c);
+        } catch (IOException e) {
+            message = "Error occurred during registration";
+            res.add("false");
+            res.add("false");
+            res.add(message);
+            e.printStackTrace();
         }
-        scanner.close();
-
-        // Append the new user registration information to the file
-        FileWriter writer = new FileWriter(file, true);
-        writer.write(username + "," + password + "," + "\n");
-        writer.close();
-
-        message = "Registration successful";
-        res.add("true");
-        res.add(message);
-
-        Client c = new Client (username, false);
-        //this.updateClient(username, c);
-    } catch (IOException e) {
-        message = "Error occurred during registration";
-        res.add("false");
-        res.add("false");
-        res.add(message);
-        e.printStackTrace();
+    
+        System.out.println("[SERVER] Registration Response: " + res);
+        return res;
     }
+    
+     */
 
-    System.out.println("[SERVER] Registration Response: " + res);
-    return res;
-}
 }

@@ -159,8 +159,10 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(" ");
-                if (parts.length == 2 && parts[0].equals(username) && parts[1].equals(password)) {
-                    validLogins = 1;
+                if (parts.length == 2 && parts[0].equals(username)) {
+                    validLogins += 1;
+                    if (parts[1].equals(password))
+                        validLogins += 1;
                     break;
                 }
             }
@@ -168,7 +170,8 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
             System.err.println("Erro ao ler do ficheiro de users: " + e);
             return -1;
         }
-        
+    
+        System.out.println(validLogins);
         return validLogins;
     }
 

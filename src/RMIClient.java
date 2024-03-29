@@ -1,23 +1,13 @@
 package src;
 
-import src.interfaces.RMIClientInterface;
 import src.interfaces.RMIServerInterface;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.rmi.Naming;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class RMIClient extends UnicastRemoteObject {
     private final int keepAliveTime = 5000;
@@ -74,67 +64,6 @@ public class RMIClient extends UnicastRemoteObject {
         }
     }
     
-    /*
-    private void register(BufferedReader br) throws RemoteException {
-        String username = "", password = "";
-        while (true) {
-            // get username and password
-            try {
-                System.out.print("\n### REGISTER ###\n  Username: ");
-                username = br.readLine();
-                while (username.length() < 4 || username.length() > 20 || username.equals("Anon")) {
-                    System.out.print("[CLIENT] Username must be between 4 and 20 characters and it can't be Anon\n  Username: ");
-                    username = br.readLine();
-                }
-    
-                System.out.print("  Password: ");
-                password = br.readLine();
-                while (password.length() < 4 || password.length() > 20) {
-                    System.out.print("[CLIENT] Password must be between 4 and 20 characters\n  Password: ");
-                    password = br.readLine();
-                }
-    
-            } catch (IOException e) {
-                System.out.println("[EXCEPTION] IOException");
-                e.printStackTrace();
-            }
-    
-            // System.out.println("[CLIENT] Registering: " + username + " " + password);
-    
-            ArrayList<String> res = this.serverInterface.checkRegister(username, password);
-    
-            if (res.get(0).equals("true")) {
-                // register success
-                System.out.println("\n[CLIENT] Registration success!");
-    
-                // admin or not
-                this.client = new Client(username, res.get(1).equals("true"));
-    
-                System.out.println("[CLIENT] Logged in as " + this.client.username);
-                return;
-            } else {
-                System.out.println("[ERROR] Registration failed: " + res.get(2));
-                System.out.print("[CLIENT] Try again? (y/n): ");
-                try {
-                    String choice = br.readLine();
-                    while (!choice.equals("y") && !choice.equals("n")) {
-                        System.out.println("[CLIENT] Invalid choice");
-                        System.out.print("[CLIENT] Try again? (y/n): ");
-                        choice = br.readLine();
-                    }
-                    if (choice.equals("n")) {
-                        return;
-                    }
-                } catch (IOException e) {
-                    System.out.println("[EXCEPTION] IOException");
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-    
-     */
-    
     private void printMenu(int userType) {
         System.out.println("\n----Menu----");
         
@@ -152,7 +81,7 @@ public class RMIClient extends UnicastRemoteObject {
             System.out.println("6. Logout");
         }
         
-        System.out.println("e. Sair");
+        System.out.println("s. Sair");
         System.out.println("------------");
         System.out.print("Opção: ");
     }
@@ -166,20 +95,16 @@ public class RMIClient extends UnicastRemoteObject {
                     String choice = br.readLine();
                     
                     if (choice.equals("1")) {
-                        String username = "", password = "";
-                        int resp = login(username, password, br);
+                        int resp = login(br);
                         if (resp == -1) {
                             System.out.println("A sair...");
                             System.exit(0);
                             break;
                         } else if (resp == 1) userType = 1;
+                        
                     } else if (choice.equals("2")) {
-                        System.out.println("----Registar----");
-                        System.out.print("Username: ");
-                        String username = br.readLine();
-                        System.out.print("Password: ");
-                        String password = br.readLine();
-                        //userType = serverInterface.register(username, password);
+                        int resp = registar(br);
+                        
                         userType = 1;
                     } else if (choice.equalsIgnoreCase("s")) {
                         System.out.println("A sair...");
@@ -195,6 +120,7 @@ public class RMIClient extends UnicastRemoteObject {
                     String choice = br.readLine();
                     System.out.println("----Logged in----");
                     
+                    // TODO: Completar esta shit porque ainda nao esta bem
                     switch (choice) {
                         case "1":
                             System.out.println("<----Pesquisar---->");
@@ -262,44 +188,52 @@ public class RMIClient extends UnicastRemoteObject {
         }
     }
     
-    private int login(String username, String password, BufferedReader br) throws IOException {
+    public int lerInputs(BufferedReader br) throws RemoteException {
+        String username;
+        try {
+            System.out.print("Username: ");
+            username = br.readLine();
+        
+            while (username.length() < 4 || username.length() > 20) {
+                System.out.print("Username errado (3-20 carateres): ");
+                username = br.readLine();
+            }
+        } catch (Exception e) {
+            System.out.println("[EXCEPTION] Erro ao ler o username: " + e);
+            return -1;
+        }
+    
+        String password;
+        try {
+            System.out.print("Password: ");
+            password = br.readLine();
+        
+            while (password.length() < 1 || password.length() > 20) {
+                System.out.print("Password errada (1-20 carateres): ");
+                password = br.readLine();
+            }
+        } catch (Exception e) {
+            System.out.println("[EXCEPTION] Erro ao ler a password: " + e);
+            return -1;
+        }
+    
+        return this.serverInterface.checkLogin(username, password);
+    }
+    
+    private int login(BufferedReader br) throws IOException {
+        String username = "", password = "";
+        
         System.out.println("\n----Login----");
         //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         while (true) {
-            try {
-                System.out.print("Username: ");
-                username = br.readLine();
-    
-                while (username.length() < 4 || username.length() > 20) {
-                    System.out.print("Username errado (3-20 carateres): ");
-                    username = br.readLine();
-                }
-            } catch (Exception e) {
-                System.out.println("[EXCEPTION] Erro ao ler o username: " + e);
-            }
+            int checked = lerInputs(br);
+            //System.out.println("oiii" + username + " " + password);
             
-            try {
-                System.out.print("Password: ");
-                password = br.readLine();
-    
-                while (password.length() < 1 || password.length() > 20) {
-                    System.out.print("Password errada (1-20 carateres): ");
-                    password = br.readLine();
-                }
-            } catch (Exception e) {
-                System.out.println("[EXCEPTION] Erro ao ler a password: " + e);
-            }
-            
-            int checked = this.serverInterface.checkLogin(username, password);
             if (checked == -1) {
                 System.out.println("[CLIENT] Login falhou: erro no servidor");
-                //br.close();
                 return -1;
-            }
-            
-            if (checked == 1) {
+            } else if (checked == 1) {
                 System.out.println("[CLIENT] Login bem sucedido!");
-                //br.close();
                 return 1;
             } else {
                 System.out.println("[CLIENT] Login falhou: usuario ou senha errados");
@@ -318,6 +252,78 @@ public class RMIClient extends UnicastRemoteObject {
                     return 0;
                 }
             }
+        }
+    }
+    
+    private int registar(BufferedReader br) throws RemoteException {
+        String username = "", password = "";
+        System.out.println("\n----Registar----");
+        
+        while (true) {
+            int checked = lerInputs(br);
+            //System.out.println("oiii" + username + " " + password);
+            if (checked == -1) {
+                System.out.println("[CLIENT] Registo falhou: erro no servidor");
+                return -1;
+            } else if (checked == 1) {
+                System.out.println("[CLIENT] Registo falhou: user ja existe");
+                String choice = "";
+                do {
+                    System.out.print("[CLIENT] Tentar novamente (s/n)? ");
+                    try {
+                        choice = br.readLine();
+                    } catch (Exception e) {
+                        System.out.println("[EXCEPTION] Erro: " + e);
+                    }
+                } while (!choice.equalsIgnoreCase("s") && !choice.equalsIgnoreCase("n"));
+                if (choice.equalsIgnoreCase("n")) {
+                    return 0;
+                }
+            } else {
+                String res = this.serverInterface.checkRegisto(username, password);
+                
+                if (res.equals("Erro no lado do servidor")) {
+                    System.out.println("[CLIENT] Registo falhou: erro no servidor");
+                    return -1;
+                } else {
+                    System.out.println("[CLIENT] " + res);
+                    return 1;
+                }
+            }
+    
+            
+            
+            
+            /*
+            if (res.get(0).equals("true")) {
+                // register success
+                System.out.println("\n[CLIENT] Registration success!");
+                
+                // admin or not
+                this.client = new Client(username, res.get(1).equals("true"));
+                
+                System.out.println("[CLIENT] Logged in as " + this.client.username);
+                return 0;
+            } else {
+                System.out.println("[ERROR] Registration failed: " + res.get(2));
+                System.out.print("[CLIENT] Try again? (y/n): ");
+                try {
+                    String choice = br.readLine();
+                    while (!choice.equals("y") && !choice.equals("n")) {
+                        System.out.println("[CLIENT] Invalid choice");
+                        System.out.print("[CLIENT] Try again? (y/n): ");
+                        choice = br.readLine();
+                    }
+                    if (choice.equals("n")) {
+                        return 0;
+                    }
+                } catch (IOException e) {
+                    System.out.println("[EXCEPTION] IOException");
+                    e.printStackTrace();
+                }
+            }
+            
+             */
         }
     }
     /*

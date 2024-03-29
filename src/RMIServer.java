@@ -3,10 +3,7 @@ package src;
 import src.interfaces.RMIClientInterface;
 import src.interfaces.RMIServerInterface;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.nio.Buffer;
 import java.nio.file.Files;
@@ -22,8 +19,6 @@ import java.util.Scanner;
 
 import static java.lang.Thread.sleep;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -141,7 +136,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         */
         int validLogins = 0;
         String filePath = "./files/users.txt";
-    
+        
         Path dirPath = Path.of("./files");
         if (!Files.exists(dirPath)) {
             try {
@@ -160,7 +155,6 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                 System.out.println("Ficheiro de users criado: " + filePath);
             } catch (Exception e) {
                 System.err.println("Erro ao criar o ficheiro de users: " + e);
-                e.printStackTrace();
                 return -1;
             }
         }
@@ -182,52 +176,22 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         return validLogins;
     }
 
-    /*
-    public ArrayList<String> checkRegister(String username, String password) throws RemoteException {
-        ArrayList<String> res = new ArrayList<>();
-        String message = "";
     
-        try {
-            // Check if the username already exists in the file
-            File file = new File("users.txt");
-            //Scanner scanner = new Scanner(file);
-            BufferedReader scanner = new BufferedReader(new FileReader(file));
-            while (scanner.ready()) {
-                String line = scanner.readLine();
-                String[] parts = line.split(",");
-                if (parts[0].equals(username)) {
-                    message = "Username already exists";
-                    res.add("false");
-                    res.add("false");
-                    res.add(message);
-                    return res;
-                }
-            }
-            scanner.close();
-        
-            // Append the new user registration information to the file
-            FileWriter writer = new FileWriter(file, true);
-            writer.write(username + "," + password + "," + "\n");
-            writer.close();
-        
-            message = "Registration successful";
-            res.add("true");
-            res.add(message);
-        
-            Client c = new Client(username, false);
-            //this.updateClient(username, c);
-        } catch (IOException e) {
-            message = "Error occurred during registration";
-            res.add("false");
-            res.add("false");
-            res.add(message);
-            e.printStackTrace();
+    public String checkRegisto(String username, String password) throws RemoteException {
+        //TODO: Modificar esta shit porque nao esta bem. temos que usar o fucking barril provavelmente
+        String filePath = "./files/users.txt";
+    
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
+            bw.write(username + " " + password + "\n");
+            System.out.println("User adicionado com sucesso.");
+            
+        } catch (Exception e) {
+            System.err.println("Erro ao escrever no ficheiro de users: " + e);
+            return "Erro no lado do servidor";
         }
-    
-        System.out.println("[SERVER] Registration Response: " + res);
-        return res;
+        
+        return "User adicionado com sucesso";
     }
     
-     */
 
 }

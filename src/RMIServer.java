@@ -4,6 +4,7 @@ import src.interfaces.RMIClientInterface;
 import src.interfaces.RMIServerInterface;
 
 import java.net.MalformedURLException;
+import java.nio.Buffer;
 import java.rmi.*;
 import java.rmi.server.*;
 import java.rmi.registry.*;
@@ -13,6 +14,12 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 import static java.lang.Thread.sleep;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
     HashMap<String, RMIClientInterface> clientes;
@@ -120,4 +127,49 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         // login successful and not admin
         return new ArrayList<String>(Arrays.asList("true", admin, message));
     }
+
+    public ArrayList<String> checkRegister(String username, String password) throws RemoteException {
+    ArrayList<String> res = new ArrayList<>();
+    String message = "";
+
+    try {
+        // Check if the username already exists in the file
+        File file = new File("users.txt");
+        //Scanner scanner = new Scanner(file);
+        BufferedReader scanner = new BufferedReader(new FileReader(file));
+        while (scanner.ready()) {
+            String line = scanner.readLine();
+            String[] parts = line.split(",");
+            if (parts[0].equals(username)) {
+                message = "Username already exists";
+                res.add("false");
+                res.add("false");
+                res.add(message);
+                return res;
+            }
+        }
+        scanner.close();
+
+        // Append the new user registration information to the file
+        FileWriter writer = new FileWriter(file, true);
+        writer.write(username + "," + password + "," + "\n");
+        writer.close();
+
+        message = "Registration successful";
+        res.add("true");
+        res.add(message);
+
+        Client c = new Client (username, false);
+        //this.updateClient(username, c);
+    } catch (IOException e) {
+        message = "Error occurred during registration";
+        res.add("false");
+        res.add("false");
+        res.add(message);
+        e.printStackTrace();
+    }
+
+    System.out.println("[SERVER] Registration Response: " + res);
+    return res;
+}
 }

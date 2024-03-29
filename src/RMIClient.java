@@ -25,7 +25,7 @@ public class RMIClient extends UnicastRemoteObject {
     private final String rmiHost;
     private final int rmiPort;
     private final String rmiRegistryName;
-    //private final Client client;
+    private Client client;
     private RMIServerInterface serverInterface;
     
     public RMIClient(String rmiHost, int rmiPort, String rmiRegistryName, RMIServerInterface serverInterface) throws RemoteException {
@@ -74,6 +74,65 @@ public class RMIClient extends UnicastRemoteObject {
             System.out.println("[EXCEPTION] Exceção na main: " + e);
         }
     }
+
+    private void register(BufferedReader br) throws RemoteException {
+        String username = "", password = "";
+        while (true) {
+            // get username and password
+            try {
+                System.out.print("\n### REGISTER ###\n  Username: ");
+                username = br.readLine();
+                while (username.length() < 4 || username.length() > 20 || username.equals("Anon")) {
+                    System.out.print("[CLIENT] Username must be between 4 and 20 characters and it can't be Anon\n  Username: ");
+                    username = br.readLine();
+                }
+    
+                System.out.print("  Password: ");
+                password = br.readLine();
+                while (password.length() < 4 || password.length() > 20) {
+                    System.out.print("[CLIENT] Password must be between 4 and 20 characters\n  Password: ");
+                    password = br.readLine();
+                }
+    
+            } catch (IOException e) {
+                System.out.println("[EXCEPTION] IOException");
+                e.printStackTrace();
+            }
+    
+            // System.out.println("[CLIENT] Registering: " + username + " " + password);
+    
+            ArrayList<String> res = this.serverInterface.checkRegister(username, password);
+    
+            if (res.get(0).equals("true")) {
+                // register success
+                System.out.println("\n[CLIENT] Registration success!");
+    
+                // admin or not
+                this.client = new Client(username, res.get(1).equals("true"));
+    
+                System.out.println("[CLIENT] Logged in as " + this.client.username);
+                return;
+            } else {
+                System.out.println("[ERROR] Registration failed: " + res.get(2));
+                System.out.print("[CLIENT] Try again? (y/n): ");
+                try {
+                    String choice = br.readLine();
+                    while (!choice.equals("y") && !choice.equals("n")) {
+                        System.out.println("[CLIENT] Invalid choice");
+                        System.out.print("[CLIENT] Try again? (y/n): ");
+                        choice = br.readLine();
+                    }
+                    if (choice.equals("n")) {
+                        return;
+                    }
+                } catch (IOException e) {
+                    System.out.println("[EXCEPTION] IOException");
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    
     
     private void login(BufferedReader br) throws RemoteException {
         String username = "", pwd = "";

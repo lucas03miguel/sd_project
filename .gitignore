@@ -4,4 +4,5 @@ out
 src/*.class
 src/interfaces/*.class
 src_teste/
-/bin/src
+bin/src
+files/

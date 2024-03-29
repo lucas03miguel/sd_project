@@ -3,6 +3,10 @@ package src;
 import src.interfaces.RMIClientInterface;
 import src.interfaces.RMIServerInterface;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.*;
 import java.rmi.server.*;
@@ -15,14 +19,13 @@ import java.util.Scanner;
 import static java.lang.Thread.sleep;
 
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
-    HashMap<String, RMIClientInterface> clientes;
+    HashMap<String, Client> clientes;
     public RMIServerInterface host;
     
     public RMIServer(RMIServerInterface hPrincipal) throws RemoteException {
         super();
-        
         this.host = hPrincipal;
-        this.clientes = new HashMap<String, RMIClientInterface>();
+        this.clientes = new HashMap<>();
         
         int rmiPort = 7000;
         String rmiHost = "192.168.1.100";
@@ -32,7 +35,9 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                 Registry r = LocateRegistry.createRegistry(rmiPort);
                 System.setProperty("java.rmi.server.hostname", rmiHost);
                 r.rebind(rmiRegistryName, this);
-                System.out.println("[SERVER] Running on " + rmiHost + ":" + rmiPort + "->" + rmiRegistryName);
+                System.out.println("[SERVER] A correr em " + rmiHost + ":" + rmiPort + "->" + rmiRegistryName);
+                
+                //meter cena dos barrels e tals
                 
                 run();
             } catch (Exception e) {
@@ -49,12 +54,9 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
     
     public void run() {
-        try (Scanner sc = new Scanner(System.in)) {
+        try {
             System.out.println("[SERVER] Server preparado.");
-            while (true) {
-                String a = sc.nextLine();
-                this.print_on_all_clients(a);
-            }
+            while (true);
         } catch (Exception re) {
             System.out.println("Exception in RMIServer.main: " + re);
         }
@@ -72,25 +74,28 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     
     public void pesquisa(String s) throws RemoteException {
         System.out.println("> " + s);
-        print_on_all_clients(s);
+        //print_on_all_clients(s);
     }
     
+    /*
     public void print_on_all_clients(String s) {
-        for (RMIClientInterface c : clientes.values()) {
-            try {
-                c.atualizaAdminPage(s);
-            } catch (RemoteException e) {
-                throw new RuntimeException(e);
+        //for (RMIClientInterface c : clientes.values()) {
+        try {
+            for (String key : clientes.keySet()) {
+                clientes.get(key).print_on_client(s);
             }
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
         }
+        //}
     }
     
     public void subscribe(RMIClientInterface c) throws RemoteException {
         System.out.print("client subscribed");
-        clientes.put(c.toString(), (RMIClientInterface) new Client(c.toString(), false));
+        clientes.put(c.toString(), new Client(c.toString(), false));
     }
 
-    private void updateClient(String username, RMIClientInterface client) throws RemoteException {
+    private void updateClient(String username, Client client) throws RemoteException {
         if (client == null) {
             this.clientes.remove(username);
         } else {
@@ -101,23 +106,47 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
             }
         }
     }
+    */
 
     public ArrayList<String> checkLogin(String username, String password) throws RemoteException {
+        //TODO: Modificar esta shit porque nao esta bem. temos que usar o fucking barril
+        /*
         ArrayList<String> res = new ArrayList<>(Arrays.asList("true", "false", "Login successful"));
+        //-------------------------------------------------
         System.out.println("[SERVER] Login status: " + res);
 
         String message = res.get(2);
 
         if (res.get(0).equals("failure")) {
             // login unsuccessful and not admin
-            return new ArrayList<String>(Arrays.asList("false", "false", message));
+            return new ArrayList<>(Arrays.asList("false", "false", message));
         }
-        String admin = res.get(1);
-
-        RMIClientInterface c = (RMIClientInterface) new Client(username, Boolean.parseBoolean(admin));
+        String pass = res.get(1);
+        
+        Client c = new Client(username, pass);
         this.updateClient(username, c);
 
         // login successful and not admin
-        return new ArrayList<String>(Arrays.asList("true", admin, message));
+        return new ArrayList<>(Arrays.asList("true", pass, message));
+        */
+        ArrayList<String> validLogins = new ArrayList<>();
+        String filePath = "../files/users.txt";
+    
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(" "); // Aqui assumimos que o nome de usuário e a senha são separados por um espaço
+                if (parts.length == 2 && parts[0].equals(username) && parts[1].equals(password)) {
+                    validLogins.add(username);
+                    break; // Encontrou um login válido, então pode parar de verificar
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Erro ao tentar ler o arquivo de users: " + e);
+        }
+    
+        return validLogins;
+        
+        
     }
 }

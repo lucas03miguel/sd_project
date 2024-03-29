@@ -4,19 +4,19 @@ import java.io.Serializable;
 
 public class Client implements Serializable {
     private final String username;
-    private final boolean isAdmin;
+    private final String password;
     
-    public Client(String username, boolean admin) {
+    public Client(String username, String password) {
         this.username = username;
-        this.isAdmin = admin;
+        this.password = password;
     }
     
     public String getUsername() {
         return username;
     }
     
-    public boolean isAdmin() {
-        return isAdmin;
+    public String getPassword() {
+        return password;
     }
     
 }

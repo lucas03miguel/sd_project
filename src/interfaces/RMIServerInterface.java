@@ -26,9 +26,9 @@ public interface RMIServerInterface extends Remote {
     
     ArrayList<String> getAliveBarrels() throws RemoteException;
     ArrayList<String> getAliveCrawlers() throws RemoteException;
-    */
-    void pesquisa(String a) throws RemoteException;
     
     void subscribe(RMIClientInterface rmiClientInterface) throws RemoteException;
     //boolean ping() throws RemoteException;
+    */
+    void pesquisa(String a) throws RemoteException;
 }

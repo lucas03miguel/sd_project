@@ -172,7 +172,7 @@ public class RMIClient extends UnicastRemoteObject {
                                 userType = 0;
                             }
                             break;
-                        case "e":
+                        case "s":
                             System.out.println("A sair...");
                             System.exit(0);
                             break;
@@ -188,8 +188,8 @@ public class RMIClient extends UnicastRemoteObject {
         }
     }
     
-    public int lerInputs(BufferedReader br) throws RemoteException {
-        String username;
+    public Object[] lerInputs(BufferedReader br) throws RemoteException {
+        String username = "";
         try {
             System.out.print("Username: ");
             username = br.readLine();
@@ -200,10 +200,10 @@ public class RMIClient extends UnicastRemoteObject {
             }
         } catch (Exception e) {
             System.out.println("[EXCEPTION] Erro ao ler o username: " + e);
-            return -1;
+            return new Object[]{-1, "", ""};
         }
     
-        String password;
+        String password = "";
         try {
             System.out.print("Password: ");
             password = br.readLine();
@@ -214,20 +214,20 @@ public class RMIClient extends UnicastRemoteObject {
             }
         } catch (Exception e) {
             System.out.println("[EXCEPTION] Erro ao ler a password: " + e);
-            return -1;
+            return new Object[]{-1, "", ""};
         }
     
-        return this.serverInterface.checkLogin(username, password);
+        return new Object[]{this.serverInterface.checkLogin(username, password), username, password};
     }
+    
     
     private int login(BufferedReader br) throws IOException {
         String username = "", password = "";
         
         System.out.println("\n----Login----");
-        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         while (true) {
-            int checked = lerInputs(br);
-            //System.out.println("oiii" + username + " " + password);
+            Object[] result = lerInputs(br);
+            int checked = (int) result[0];
             
             if (checked == -1) {
                 System.out.println("[CLIENT] Login falhou: erro no servidor");
@@ -248,7 +248,6 @@ public class RMIClient extends UnicastRemoteObject {
                     }
                 } while (!choice.equalsIgnoreCase("s") && !choice.equalsIgnoreCase("n"));
                 if (choice.equalsIgnoreCase("n")) {
-                    //br.close();
                     return 0;
                 }
             }
@@ -256,17 +255,21 @@ public class RMIClient extends UnicastRemoteObject {
     }
     
     private int registar(BufferedReader br) throws RemoteException {
-        String username = "", password = "";
         System.out.println("\n----Registar----");
         
         while (true) {
-            int checked = lerInputs(br);
+            Object[] result = lerInputs(br);
+            int checked = (int) result[0];
+            String username = (String) result[1];
+            String password = (String) result[2];
+            
             //System.out.println("oiii" + username + " " + password);
+            
             if (checked == -1) {
                 System.out.println("[CLIENT] Registo falhou: erro no servidor");
                 return -1;
             } else if (checked == 1) {
-                System.out.println("[CLIENT] Registo falhou: user ja existe");
+                System.out.println("[CLIENT] Registo falhou: user" + username + "ja existe");
                 String choice = "";
                 do {
                     System.out.print("[CLIENT] Tentar novamente (s/n)? ");
@@ -290,40 +293,6 @@ public class RMIClient extends UnicastRemoteObject {
                     return 1;
                 }
             }
-    
-            
-            
-            
-            /*
-            if (res.get(0).equals("true")) {
-                // register success
-                System.out.println("\n[CLIENT] Registration success!");
-                
-                // admin or not
-                this.client = new Client(username, res.get(1).equals("true"));
-                
-                System.out.println("[CLIENT] Logged in as " + this.client.username);
-                return 0;
-            } else {
-                System.out.println("[ERROR] Registration failed: " + res.get(2));
-                System.out.print("[CLIENT] Try again? (y/n): ");
-                try {
-                    String choice = br.readLine();
-                    while (!choice.equals("y") && !choice.equals("n")) {
-                        System.out.println("[CLIENT] Invalid choice");
-                        System.out.print("[CLIENT] Try again? (y/n): ");
-                        choice = br.readLine();
-                    }
-                    if (choice.equals("n")) {
-                        return 0;
-                    }
-                } catch (IOException e) {
-                    System.out.println("[EXCEPTION] IOException");
-                    e.printStackTrace();
-                }
-            }
-            
-             */
         }
     }
     /*

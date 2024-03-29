@@ -19,10 +19,6 @@ import java.util.Scanner;
 
 import static java.lang.Thread.sleep;
 
-import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.FileReader;
-
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
     HashMap<String, Client> clientes;
     public RMIServerInterface host;
@@ -178,20 +174,20 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
 
     
     public String checkRegisto(String username, String password) throws RemoteException {
-        //TODO: Modificar esta shit porque nao esta bem. temos que usar o fucking barril provavelmente
-        String filePath = "./files/users.txt";
-    
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
-            bw.write(username + " " + password + "\n");
-            System.out.println("User adicionado com sucesso.");
-            
-        } catch (Exception e) {
-            System.err.println("Erro ao escrever no ficheiro de users: " + e);
-            return "Erro no lado do servidor";
-        }
-        
-        return "User adicionado com sucesso";
+    String filePath = "./files/users.txt";
+
+    try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, true))) {
+        bw.write(username + " " + password + "\n");
+        System.out.println("O user adicionado foi: " + username + " " + password);
+        bw.flush();
+        System.out.println("User adicionado com sucesso. hadshasdhahsdhasdhasdhadhsahdsh");
+    } catch (Exception e) {
+        System.err.println("Erro ao escrever no ficheiro de users: " + e);
+        return "Erro no lado do servidor";
     }
+
+    return "User adicionado com sucesso";
+}
     
 
 }

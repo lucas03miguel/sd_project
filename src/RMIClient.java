@@ -117,56 +117,53 @@ public class RMIClient extends UnicastRemoteObject {
                         break;
                     } else {
                         System.out.println("Escolha inválida!");
+                        continue;
                     }
                 }
                 
                 if (userType == 1) {
                     printMenu(userType);
                     String choice = br.readLine();
-                    //System.out.println("----Logged in----");
                     
-                    // TODO: Completar esta shit porque ainda nao esta bem
                     switch (choice) {
-                        case "1":
+                        case "1" -> {
                             System.out.println("<----Pesquisar---->");
                             System.out.print("Insira pesquisa: ");
                             String searchQuery = br.readLine();
-                            serverInterface.pesquisa(searchQuery);
-                            break;
-                        case "2":
+                            //serverInterface.pesquisa(searchQuery);
+                        }
+                        case "2" -> {
                             System.out.println("<----Indexar novo URL---->");
                             System.out.print("Introduza URL: ");
                             String url = br.readLine();
                             //serverInterface.indexar(url);
-                            break;
-                        case "3":
+                        }
+                        case "3" -> {
                             // TODO: sao os fucking barris de vinho
                             System.out.println("<----Lista dos barrels---->");
                             //serverInterface.downloadersList();
                             System.out.println("-------------------------");
-                            break;
-                        case "4":
+                        }
+                        case "4" -> {
                             // TODO: fucking lista dos downloaders
                             System.out.println("<----Lista dos downloaders---->");
                             //serverInterface.downloadersList();
                             System.out.println("-----------------------------");
-                            break;
-                        case "5":
+                        }
+                        case "5" -> {
                             System.out.println("<----Top 10 pesquisas---->");
                             //serverInterface.top10();
                             System.out.println("------------------------");
-                            break;
-                        case "6":
+                        }
+                        case "6" -> {
                             System.out.println("<----Logout---->");
                             userType = 0;
-                            break;
-                        case "s":
+                        }
+                        case "s" -> {
                             System.out.println("A sair...");
                             System.exit(0);
-                            break;
-                        default:
-                            System.out.println("Escolha errada");
-                            break;
+                        }
+                        default -> System.out.println("Escolha errada");
                     }
                 }
             }

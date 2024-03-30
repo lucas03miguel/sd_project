@@ -8,6 +8,8 @@ import java.util.HashMap;
 public interface RMIServerInterface extends Remote {
     int checkLogin(String username, String password) throws RemoteException;
     String checkRegisto(String username, String password) throws RemoteException;
+    void indexar(String url);
+    
     /*
     boolean alive() throws RemoteException;
     
@@ -29,6 +31,7 @@ public interface RMIServerInterface extends Remote {
     
     void subscribe(RMIClientInterface rmiClientInterface) throws RemoteException;
     //boolean ping() throws RemoteException;
-    */
     void pesquisa(String a) throws RemoteException;
+    */
+    
 }

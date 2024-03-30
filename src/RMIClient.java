@@ -136,7 +136,7 @@ public class RMIClient extends UnicastRemoteObject {
                             System.out.println("<----Indexar novo URL---->");
                             System.out.print("Introduza URL: ");
                             String url = br.readLine();
-                            //serverInterface.indexar(url);
+                            serverInterface.indexar(url);
                         }
                         case "3" -> {
                             // TODO: sao os fucking barris de vinho

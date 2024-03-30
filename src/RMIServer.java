@@ -73,12 +73,17 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         }
     }
     
+    
+    
+    public void indexar(String url) {
+    
+    }
+    
+    /*
     public void pesquisa(String s) throws RemoteException {
         System.out.println("> " + s);
         //print_on_all_clients(s);
     }
-    
-    /*
     public void print_on_all_clients(String s) {
         //for (RMIClientInterface c : clientes.values()) {
         try {

@@ -1,36 +1,29 @@
 package src;
 
-import src.interfaces.RMIClientInterface;
 import src.interfaces.RMIServerInterface;
+import src.interfaces.URLQueueInterface;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.nio.Buffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.*;
 import java.rmi.server.*;
 import java.rmi.registry.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 
 import static java.lang.Thread.sleep;
 
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
     HashMap<String, Client> clientes;
-    public RMIServerInterface host;
+    URLQueueInterface urlQueue;
     
-    public RMIServer(RMIServerInterface hPrincipal) throws RemoteException {
+    
+    public RMIServer(int rmiPort, String rmiHost, String rmiRegistryName) throws RemoteException {
         super();
-        this.host = hPrincipal;
         this.clientes = new HashMap<>();
+        this.urlQueue = new URLQueue();
         
-        int rmiPort = 7000;
-        String rmiHost = "192.168.1.100";
-        String rmiRegistryName = "OPyThaOn";
         while (true) {
             try {
                 Registry r = LocateRegistry.createRegistry(rmiPort);
@@ -45,7 +38,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                 System.out.println("[EXCEPTION] Nao conseguiu criar registry. A tentar novamente num segundo...");
                 try {
                     sleep(1000);
-                    this.host = (RMIServerInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
+                    LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
                 } catch (InterruptedException | NotBoundException e2) {
                     System.out.println("[EXCEPTION] " + e2);
                     return;
@@ -65,18 +58,27 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
+        Properties prop = new Properties();
+        String SETTINGS_PATH = "properties/configuration.properties";
         
         try {
-            new RMIServer(null);
+            prop.load(new FileInputStream(SETTINGS_PATH));
+            int rmiPort = Integer.parseInt(prop.getProperty("PORT_SERVER"));
+            String rmiHost = prop.getProperty("HOST_SERVER");
+            String rmiRegistryName = prop.getProperty("SERVER_REGISTRY_NAME");
+            
+            new RMIServer(rmiPort, rmiHost, rmiRegistryName);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
     
-    
-    
-    public void indexar(String url) {
-    
+    @Override
+    public String indexar(String url) throws RemoteException {
+        System.out.println("[SERVER] Adicionando url à queue: " + url);
+        String res = this.urlQueue.inserirLink(url);
+        System.out.println(this.urlQueue.getUrlQueue());
+        return res;
     }
     
     /*

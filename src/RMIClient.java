@@ -3,12 +3,14 @@ package src;
 import src.interfaces.RMIServerInterface;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
+import java.util.Properties;
 
 public class RMIClient extends UnicastRemoteObject {
     private final int keepAliveTime = 5000;
@@ -41,11 +43,16 @@ public class RMIClient extends UnicastRemoteObject {
     
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
+        Properties prop = new Properties();
+        String SETTINGS_PATH = "properties/configuration.properties";
         
         try {
-            String rmiHost = "127.0.0.1";
-            int rmiPort = 7000;
-            String rmiRegistryName = "OPyThaOn";
+            prop.load(new FileInputStream(SETTINGS_PATH));
+            
+            String rmiHost = prop.getProperty("HOST_CLIENT");
+            int rmiPort = Integer.parseInt(prop.getProperty("PORT_SERVER"));
+            String rmiRegistryName = prop.getProperty("SERVER_REGISTRY_NAME");
+            
             //Client client = new Client("Antonio", false);
             //RMIServerInterface svInterface = (RMIServerInterface) Naming.lookup(rmiRegistryName);
             RMIServerInterface svInterface = (RMIServerInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
@@ -53,8 +60,6 @@ public class RMIClient extends UnicastRemoteObject {
         } catch (Exception e) {
             System.out.println("[CLIENT] Erro ao conectar ao servidor: " + e);
         }
-        System.out.println("oi");
-        
     }
     
     public void run(){
@@ -134,9 +139,19 @@ public class RMIClient extends UnicastRemoteObject {
                         }
                         case "2" -> {
                             System.out.println("<----Indexar novo URL---->");
-                            System.out.print("Introduza URL: ");
-                            String url = br.readLine();
-                            serverInterface.indexar(url);
+                            String res;
+                            do {
+                                System.out.print("Introduza URL: ");
+                                String url = br.readLine();
+    
+                                res = serverInterface.indexar(url);
+                                if (res.equals("URL valido")) {
+                                    System.out.println("URL indexado com sucesso!");
+                                    break;
+                                } else {
+                                    System.out.println(res);
+                                }
+                            } while (true);
                         }
                         case "3" -> {
                             // TODO: sao os fucking barris de vinho

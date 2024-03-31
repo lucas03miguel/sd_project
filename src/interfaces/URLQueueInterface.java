@@ -2,9 +2,11 @@ package src.interfaces;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.List;
+import java.util.Queue;
 
 public interface URLQueueInterface extends Remote {
-    String takeLink() throws RemoteException;
-    void offerLink(String link) throws RemoteException;
-    boolean isempty() throws RemoteException;
+    List<String> getUrlQueue() throws RemoteException;
+    String inserirLink(String link) throws RemoteException;
+    boolean isEmpty() throws RemoteException;
 }

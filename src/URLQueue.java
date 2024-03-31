@@ -79,6 +79,12 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
         return this.urlQueue.poll();
     }
     
+    @Override
+    public int size() throws RemoteException{
+        return this.urlQueue.size();
+    }
+    
+    @Override
     public boolean isEmpty() throws RemoteException {
         return this.urlQueue.isEmpty();
     }

@@ -9,4 +9,6 @@ public interface URLQueueInterface extends Remote {
     String inserirLink(String link) throws RemoteException;
     boolean isEmpty() throws RemoteException;
     String removerLink() throws RemoteException;
+    
+    int size() throws RemoteException;
 }

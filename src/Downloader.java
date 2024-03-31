@@ -7,6 +7,9 @@ import org.jsoup.select.Elements;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Properties;
@@ -16,27 +19,47 @@ import java.rmi.Remote;
 
 
 public class Downloader extends Thread implements Remote {
+    private Downloader d;
     
-    private final String MULTICAST_ADDRESS;
-    private final int PORT;
+    private final String multicastAddress;
+    private final int multicastPort;
     private final InetAddress group;
     private final MulticastSocket socket;
     private final int idDownloader;
-    private final interfaces.URLQueueInterface server;
+    private URLQueueInterface urlQueue;
     private final HashMap<String, HashSet<String>> index = new HashMap<>();
     
     
-    public Downloader(int id, int MULTICAST_PORT, String MULTICAST_ADDRESS, URLQueueInterface url) {
+    public Downloader(int id, int MULTICAST_PORT, String MULTICAST_ADDRESS) throws RemoteException {
         this.socket = null;
         this.group = null;
-        this.PORT = MULTICAST_PORT;
-        this.MULTICAST_ADDRESS = MULTICAST_ADDRESS;
+        this.multicastPort = MULTICAST_PORT;
+        this.multicastAddress = MULTICAST_ADDRESS;
         
         this.idDownloader = id;
-        this.server = url;
+        
+        try {
+            this.urlQueue = (URLQueueInterface) Naming.lookup("URLQUEUE");
+            run();
+        } catch (Exception e) {
+            System.out.println("[DOWNLOADER] Erro ao ligar à URL queue");
+        }
     }
     
     public void run() {
+        int size = 1;
+        while (true) {
+            try {
+                if (!this.urlQueue.isEmpty() && this.urlQueue.size() == size) {
+                    System.out.println("Conteudo na queue:");
+                    System.out.println(this.urlQueue.getUrlQueue() + "\n");
+                    size++;
+                }
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+            
+        }
         /*
         
         try {
@@ -71,7 +94,8 @@ public class Downloader extends Thread implements Remote {
             int port = Integer.parseInt(prop.getProperty("PORT_SERVER"));
             String address = prop.getProperty("SERVER_REGISTRY_NAME");
             
-            new Downloader(1, port, address, null);
+            new Downloader(1, port, address);
+            
         } catch (Exception e) {
             System.out.println("[DOWNLOADER] Erro");
         }
@@ -107,7 +131,7 @@ public class Downloader extends Thread implements Remote {
             //String message = this.getName() + " packet " + counter++;
             byte[] buffer = message.getBytes();
             
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, multicastPort);
             socket.send(packet);
             
         } catch (IOException e) {
@@ -116,6 +140,10 @@ public class Downloader extends Thread implements Remote {
             assert socket != null;
             socket.close();
         }
+    }
+    
+    public String getUrlQueue() {
+        return urlQueue.toString();
     }
 }
 

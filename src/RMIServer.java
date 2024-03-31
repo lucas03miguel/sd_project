@@ -16,7 +16,7 @@ import static java.lang.Thread.sleep;
 
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
     HashMap<String, Client> clientes;
-    URLQueueInterface urlQueue;
+    private URLQueueInterface urlQueue;
     
     
     public RMIServer(int rmiPort, String rmiHost, String rmiRegistryName) throws RemoteException {

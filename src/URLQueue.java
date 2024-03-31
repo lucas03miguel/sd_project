@@ -36,7 +36,7 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
     public static void main(String[] args) {
         try {
             new URLQueue();
-            System.out.println("URLQueue bound in registry");
+            System.out.println("URL a incializar...");
         } catch (Exception e) {
             System.out.println("URLQueue err: " + e);
         }

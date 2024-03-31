@@ -1,6 +1,6 @@
 package src;
 
-import src.interfaces.URLQueueInterface;
+import interfaces.URLQueueInterface;
 
 import java.io.Serializable;
 import java.net.MalformedURLException;

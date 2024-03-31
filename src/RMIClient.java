@@ -1,6 +1,6 @@
 package src;
 
-import src.interfaces.RMIServerInterface;
+import interfaces.RMIServerInterface;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;

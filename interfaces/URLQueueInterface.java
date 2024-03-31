@@ -1,9 +1,8 @@
-package src.interfaces;
+package interfaces;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.Queue;
 
 public interface URLQueueInterface extends Remote {
     List<String> getUrlQueue() throws RemoteException;

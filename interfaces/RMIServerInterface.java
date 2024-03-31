@@ -1,9 +1,7 @@
-package src.interfaces;
+package interfaces;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public interface RMIServerInterface extends Remote {
     int checkLogin(String username, String password) throws RemoteException;

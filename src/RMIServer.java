@@ -1,7 +1,7 @@
 package src;
 
-import src.interfaces.RMIServerInterface;
-import src.interfaces.URLQueueInterface;
+import interfaces.RMIServerInterface;
+import interfaces.URLQueueInterface;
 
 import java.io.*;
 import java.nio.file.Files;

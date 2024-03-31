@@ -9,9 +9,6 @@ import java.util.HashSet;
 import java.util.StringTokenizer;
 import java.net.*;
 import java.rmi.Remote;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
-import java.util.concurrent.Semaphore;
 
 
 public class Downloader extends Thread implements Remote {
@@ -21,14 +18,14 @@ public class Downloader extends Thread implements Remote {
     private final InetAddress group;
     private final MulticastSocket socket;
     private final int idDownloader;
-    private final src.interfaces.URLQueueInterface server;
+    private final interfaces.URLQueueInterface server;
     private final HashMap<String, HashSet<String>> index = new HashMap<>();
     
     public static void main(String[] args) {
     
     }
     
-    public Downloader(int id, int MULTICAST_SEND_PORT, String MULTICAST_ADDRESS, src.interfaces.URLQueueInterface server) {
+    public Downloader(int id, int MULTICAST_SEND_PORT, String MULTICAST_ADDRESS, interfaces.URLQueueInterface server) {
         this.socket = null;
         this.group = null;
         this.PORT = MULTICAST_SEND_PORT;

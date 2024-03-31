@@ -1,12 +1,11 @@
 package src;
 
-import src.interfaces.RMIBarrelInterface;
+import interfaces.RMIBarrelInterface;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 public class IndexStorageBarrels {
     private final int id;

@@ -22,10 +22,10 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     public RMIServer(int rmiPort, String rmiHost, String rmiRegistryName) throws RemoteException {
         super();
         this.clientes = new HashMap<>();
-        this.urlQueue = new URLQueue();
-        
         while (true) {
             try {
+                this.urlQueue = (URLQueueInterface) Naming.lookup("URLQUEUE");
+                
                 Registry r = LocateRegistry.createRegistry(rmiPort);
                 System.setProperty("java.rmi.server.hostname", rmiHost);
                 r.rebind(rmiRegistryName, this);
@@ -77,15 +77,18 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     public String indexar(String url) throws RemoteException {
         System.out.println("[SERVER] Adicionando url à queue: " + url);
         String res = this.urlQueue.inserirLink(url);
-        System.out.println(this.urlQueue.getUrlQueue());
+        if (res.equals("URL valido")) System.out.println(this.urlQueue.getUrlQueue());
+        else System.out.println(res);
+        
         return res;
     }
     
-    /*
-    public void pesquisa(String s) throws RemoteException {
+    @Override
+    public void pesquisar(String s) throws RemoteException {
         System.out.println("> " + s);
         //print_on_all_clients(s);
     }
+    /*
     public void print_on_all_clients(String s) {
         //for (RMIClientInterface c : clientes.values()) {
         try {

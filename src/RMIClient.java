@@ -135,7 +135,7 @@ public class RMIClient extends UnicastRemoteObject {
                             System.out.println("<----Pesquisar---->");
                             System.out.print("Insira pesquisa: ");
                             String searchQuery = br.readLine();
-                            //serverInterface.pesquisa(searchQuery);
+                            serverInterface.pesquisar(searchQuery);
                         }
                         case "2" -> {
                             System.out.println("<----Indexar novo URL---->");

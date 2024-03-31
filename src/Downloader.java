@@ -1,11 +1,15 @@
 package src;
 
+import interfaces.URLQueueInterface;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
+
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.StringTokenizer;
 import java.net.*;
 import java.rmi.Remote;
@@ -21,18 +25,15 @@ public class Downloader extends Thread implements Remote {
     private final interfaces.URLQueueInterface server;
     private final HashMap<String, HashSet<String>> index = new HashMap<>();
     
-    public static void main(String[] args) {
     
-    }
-    
-    public Downloader(int id, int MULTICAST_SEND_PORT, String MULTICAST_ADDRESS, interfaces.URLQueueInterface server) {
+    public Downloader(int id, int MULTICAST_PORT, String MULTICAST_ADDRESS, URLQueueInterface url) {
         this.socket = null;
         this.group = null;
-        this.PORT = MULTICAST_SEND_PORT;
+        this.PORT = MULTICAST_PORT;
         this.MULTICAST_ADDRESS = MULTICAST_ADDRESS;
         
         this.idDownloader = id;
-        this.server = server;
+        this.server = url;
     }
     
     public void run() {
@@ -58,6 +59,24 @@ public class Downloader extends Thread implements Remote {
         }
         */
     }
+    
+    public static void main(String[] args) {
+        System.getProperties().put("java.security.policy", "policy.all");
+        Properties prop = new Properties();
+        String SETTINGS_PATH = "properties/configuration.properties";
+        
+        try {
+            prop.load(new FileInputStream(SETTINGS_PATH));
+            
+            int port = Integer.parseInt(prop.getProperty("PORT_SERVER"));
+            String address = prop.getProperty("SERVER_REGISTRY_NAME");
+            
+            new Downloader(1, port, address, null);
+        } catch (Exception e) {
+            System.out.println("[DOWNLOADER] Erro");
+        }
+    }
+    
     
     public void getWebsites(String url) {
         if (url.equals("")) {

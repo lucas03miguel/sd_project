@@ -38,6 +38,7 @@ public class Downloader extends Thread implements Remote {
         
         this.urlQueue = (URLQueueInterface) Naming.lookup("URLQUEUE");
         this.index = new HashMap<>();
+        System.out.println("Download criado com sucesso");
         start();
     }
     

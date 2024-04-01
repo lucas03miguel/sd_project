@@ -25,7 +25,7 @@ public class Downloader extends Thread implements Remote {
     private final MulticastSocket socket;
     private final int idDownloader;
     private final URLQueueInterface urlQueue;
-    private HashMap<String, HashSet<WebPage>> index;
+    private final HashMap<String, HashSet<WebPage>> index;
     
     
     public Downloader(int id, int MULTICAST_PORT, String MULTICAST_ADDRESS) throws Exception {
@@ -45,19 +45,26 @@ public class Downloader extends Thread implements Remote {
     public void run() {
         while (true) {
             try {
-                String url = this.urlQueue.removerLink();
-                if (url == null) continue;
+                String url = null;
+                synchronized (urlQueue) {
+                    if (!urlQueue.isEmpty()) {
+                        url = this.urlQueue.removerLink();
+                    }
+                }
                 
-                System.out.println("Processando URL: " + url);
-                // Processa o URL aqui
-                processarURL(url);
-                System.out.println(index.toString());
-                
-            } catch (RemoteException e) {
-                System.out.println("[DOWNLOADER] Erro:" + e);
+                if (url != null) {
+                    System.out.println("Processando URL: " + url);
+                    processarURL(url);
+                    printIndex();
+                } else {
+                    sleep(1000);
+                }
+            } catch (Exception e) {
+                System.out.println("[DOWNLOADER] Erro: " + e);
             }
         }
     }
+    
     
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
@@ -101,18 +108,13 @@ public class Downloader extends Thread implements Remote {
     }
     */
     
-    private String obterConteudoDaPagina(String url) throws IOException {
-        Document document = Jsoup.connect(url).get();
-        return document.html();
-    }
-    
     private String extrairTitulo(String conteudo) {
         Document document = Jsoup.parse(conteudo);
         Element titleElement = document.selectFirst("title");
         return titleElement != null ? titleElement.text() : "";
     }
     
-    private String extrairTextSnippet(String conteudo) {
+    private String extrairCitacao(String conteudo) {
         Document document = Jsoup.parse(conteudo);
         Elements paragraphs = document.select("p");
         if (!paragraphs.isEmpty()) {
@@ -128,21 +130,42 @@ public class Downloader extends Thread implements Remote {
         String[] wordArray = text.split("\\s+");
         for (String word : wordArray) {
             word = word.replaceAll("[^\\p{L}]", "").toLowerCase();
-            if (!word.isEmpty()) {
+            if (word.length() > 2) {
                 words.add(word);
             }
         }
         return words;
     }
     
+    public void printIndex() {
+        for (Map.Entry<String, HashSet<WebPage>> entry : index.entrySet()) {
+            String word = entry.getKey();
+            HashSet<WebPage> pages = entry.getValue();
+            System.out.println("Palavra: " + word);
+            System.out.println("Páginas:");
+            for (WebPage page : pages) {
+                System.out.println("  URL: " + page.getUrl());
+                System.out.println("  Título: " + page.getTitle());
+                System.out.println("  Trecho de texto: " + page.getTextSnippet());
+                System.out.println("  Palavras: " + page.getWords());
+                System.out.println();
+            }
+            System.out.println("-----------------------------");
+        }
+    }
+    
+    
     private void processarURL(String url) {
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            url = "http://".concat(url);
+        }
+        
         try {
-            // Obtenha o conteúdo da página aqui (usando JSoup, por exemplo)
-            String conteudo = obterConteudoDaPagina(url);
+            Document document = Jsoup.connect(url).get();
+            String conteudo = document.html();
             
-            // Extraia as informações relevantes da página
             String title = extrairTitulo(conteudo);
-            String textSnippet = extrairTextSnippet(conteudo);
+            String textSnippet = extrairCitacao(conteudo);
             Set<String> words = extrairPalavras(conteudo);
             
             // Crie um objeto WebPage
@@ -156,9 +179,15 @@ public class Downloader extends Thread implements Remote {
                 }
                 index.get(palavra).add(webPage);
             }
+    
+            Elements links = document.select("a[href]");
+            for (Element link : links) {
+                String linkUrl = link.attr("abs:href");
+                urlQueue.inserirLink(linkUrl);
+            }
             
         } catch (Exception e) {
-            System.out.println("[DOWNLOADER] Erro: + e");
+            System.out.println("[DOWNLOADER] Erro: " + e);
         }
     }
     

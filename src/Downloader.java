@@ -126,7 +126,7 @@ public class Downloader extends Thread implements Remote {
         String text = document.text();
         String[] wordArray = text.split("\\s+");
         for (String word : wordArray) {
-            word = word.replaceAll("[^a-zA-Z]", "").toLowerCase();
+            word = word.replaceAll("[^\\p{L}]", "").toLowerCase();
             if (!word.isEmpty()) {
                 words.add(word);
             }

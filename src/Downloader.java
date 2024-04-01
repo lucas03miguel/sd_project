@@ -25,16 +25,18 @@ public class Downloader extends Thread implements Remote {
     private final MulticastSocket socket;
     private final int idDownloader;
     private final URLQueueInterface urlQueue;
+    private final int totalDownloaders;
     private final HashMap<String, HashSet<WebPage>> index;
     
     
-    public Downloader(int id, int MULTICAST_PORT, String MULTICAST_ADDRESS) throws Exception {
+    public Downloader(int id, int MULTICAST_PORT, String MULTICAST_ADDRESS, int totalDownloaders) throws Exception {
         this.socket = null;
         this.group = null;
         this.multicastPort = MULTICAST_PORT;
         this.multicastAddress = MULTICAST_ADDRESS;
         
         this.idDownloader = id;
+        this.totalDownloaders = totalDownloaders;
         
         this.urlQueue = (URLQueueInterface) Naming.lookup("URLQUEUE");
         this.index = new HashMap<>();
@@ -48,7 +50,12 @@ public class Downloader extends Thread implements Remote {
                 String url = null;
                 synchronized (urlQueue) {
                     if (!urlQueue.isEmpty()) {
-                        url = this.urlQueue.removerLink();
+                        List<String> urls = urlQueue.getUrlQueue();
+                        int index;
+                        if (urls.isEmpty()) index = 0;
+                        else index = idDownloader % urls.size();
+                        url = urls.get(index);
+                        urlQueue.removerLink(url);
                     }
                 }
                 
@@ -77,7 +84,11 @@ public class Downloader extends Thread implements Remote {
             int port = Integer.parseInt(prop.getProperty("PORT_SERVER"));
             String address = prop.getProperty("SERVER_REGISTRY_NAME");
             
-            new Downloader(1, port, address);
+            int totalDownloaders = 50; // Número total de downloaders
+            for (int i = 1; i <= totalDownloaders; i++) {
+                new Downloader(i, port, address, totalDownloaders);
+            }
+            //new Downloader(1, port, address, 5);
             
         } catch (Exception e) {
             System.out.println("[DOWNLOADER] Erro");
@@ -124,7 +135,7 @@ public class Downloader extends Thread implements Remote {
     }
     
     private Set<String> extrairPalavras(String conteudo) {
-        Set<String> words = new HashSet<>();
+        HashSet<String> words = new HashSet<>();
         Document document = Jsoup.parse(conteudo);
         String text = document.text();
         String[] wordArray = text.split("\\s+");
@@ -142,22 +153,22 @@ public class Downloader extends Thread implements Remote {
             String word = entry.getKey();
             HashSet<WebPage> pages = entry.getValue();
             System.out.println("Palavra: " + word);
-            System.out.println("Páginas:");
+            /*
+            System.out.println(" Páginas:");
             for (WebPage page : pages) {
                 System.out.println("  URL: " + page.getUrl());
                 System.out.println("  Título: " + page.getTitle());
-                System.out.println("  Trecho de texto: " + page.getTextSnippet());
-                System.out.println("  Palavras: " + page.getWords());
                 System.out.println();
             }
+            
+             */
             System.out.println("-----------------------------");
         }
     }
     
-    
     private void processarURL(String url) {
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            url = "http://".concat(url);
+            url = "https://".concat(url);
         }
         
         try {
@@ -168,10 +179,8 @@ public class Downloader extends Thread implements Remote {
             String textSnippet = extrairCitacao(conteudo);
             Set<String> words = extrairPalavras(conteudo);
             
-            // Crie um objeto WebPage
             WebPage webPage = new WebPage(url, title, textSnippet, words);
             
-            // Adicione a página ao índice
             for (String palavra : words) {
                 palavra = palavra.toLowerCase();
                 if (!index.containsKey(palavra)) {
@@ -179,18 +188,22 @@ public class Downloader extends Thread implements Remote {
                 }
                 index.get(palavra).add(webPage);
             }
-    
+            
+            /*
             Elements links = document.select("a[href]");
             for (Element link : links) {
                 String linkUrl = link.attr("abs:href");
                 urlQueue.inserirLink(linkUrl);
             }
             
+             */
+            
         } catch (Exception e) {
             System.out.println("[DOWNLOADER] Erro: " + e);
         }
     }
     
+    /*
     public HashSet<WebPage> getWebPages(String palavra) {
         palavra = palavra.toLowerCase();
         return index.getOrDefault(palavra, new HashSet<>());
@@ -218,6 +231,8 @@ public class Downloader extends Thread implements Remote {
         }
         return null;
     }
+    
+     */
     
     private void sendMessage(String message) {
         try {

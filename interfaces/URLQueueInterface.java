@@ -8,6 +8,6 @@ public interface URLQueueInterface extends Remote {
     List<String> getUrlQueue() throws RemoteException;
     String inserirLink(String link) throws RemoteException;
     boolean isEmpty() throws RemoteException;
-    String removerLink() throws RemoteException;
+    void removerLink(String url) throws RemoteException;
     int size() throws RemoteException;
 }

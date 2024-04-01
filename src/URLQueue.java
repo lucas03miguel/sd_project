@@ -77,13 +77,11 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
     
     
     
-    
-    public String removerLink() throws RemoteException {
+    public void removerLink(String url) throws RemoteException {
         try {
-            return this.urlQueue.take();
-        } catch (InterruptedException e) {
+            boolean res = this.urlQueue.remove(url);
+        } catch (Exception e) {
             System.out.println("Erro: " + e);
-            return null;
         }
     }
     

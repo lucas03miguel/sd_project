@@ -38,6 +38,7 @@ public class Downloader extends Thread implements Remote {
         this.urlQueue = (URLQueueInterface) Naming.lookup(URLQueueName);
         this.index = new HashMap<>();
         System.out.println("Download criado com sucesso");
+        start();
     
         while (true) {
             String message = "testeee";
@@ -50,13 +51,18 @@ public class Downloader extends Thread implements Remote {
         
             try { sleep((long) (Math.random() * 2500)); } catch (InterruptedException ignored) { }
         }
-        
-        //start();
+            
     }
     
     public void run() {
         while (true) {
             try {
+                byte[] buffer = new byte[1024];
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                socket.receive(packet);
+                String message = new String(packet.getData(), 0, packet.getLength());
+                System.out.println("Mensagem recebida: " + message);
+
                 String url = null;
                 synchronized (urlQueue) {
                     if (!urlQueue.isEmpty()) {
@@ -68,7 +74,7 @@ public class Downloader extends Thread implements Remote {
                         urlQueue.removerLink(url);
                     }
                 }
-                
+
                 if (url != null) {
                     System.out.println("Processando URL: " + url);
                     processarURL(url);

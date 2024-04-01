@@ -1,36 +1,34 @@
 package src;
 
 import interfaces.URLQueueInterface;
+
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.*;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.rmi.Naming;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.StringTokenizer;
-import java.net.*;
 import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.util.*;
 
 
 public class Downloader extends Thread implements Remote {
-    private Downloader d;
-    
     private final String multicastAddress;
     private final int multicastPort;
     private final InetAddress group;
     private final MulticastSocket socket;
     private final int idDownloader;
-    private URLQueueInterface urlQueue;
-    private final HashMap<String, HashSet<String>> index = new HashMap<>();
+    private final URLQueueInterface urlQueue;
+    private HashMap<String, HashSet<WebPage>> index;
     
     
-    public Downloader(int id, int MULTICAST_PORT, String MULTICAST_ADDRESS) throws RemoteException {
+    public Downloader(int id, int MULTICAST_PORT, String MULTICAST_ADDRESS) throws Exception {
         this.socket = null;
         this.group = null;
         this.multicastPort = MULTICAST_PORT;
@@ -38,49 +36,26 @@ public class Downloader extends Thread implements Remote {
         
         this.idDownloader = id;
         
-        try {
-            this.urlQueue = (URLQueueInterface) Naming.lookup("URLQUEUE");
-            run();
-        } catch (Exception e) {
-            System.out.println("[DOWNLOADER] Erro ao ligar à URL queue");
-        }
+        this.urlQueue = (URLQueueInterface) Naming.lookup("URLQUEUE");
+        this.index = new HashMap<>();
+        start();
     }
     
     public void run() {
-        int size = 1;
         while (true) {
             try {
-                if (!this.urlQueue.isEmpty() && this.urlQueue.size() == size) {
-                    System.out.println("Conteudo na queue:");
-                    System.out.println(this.urlQueue.getUrlQueue() + "\n");
-                    size++;
-                }
-            } catch (RemoteException e) {
-                throw new RuntimeException(e);
-            }
-            
-        }
-        /*
-        
-        try {
-            InetAddress mcastaddr = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(new InetSocketAddress(mcastaddr, 0), NetworkInterface.getByIndex(0));
-            while (true) {
-                byte[] buffer = new byte[256];
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                socket.receive(packet);
+                String url = this.urlQueue.removerLink();
+                if (url == null) continue;
                 
-                System.out.println("Received packet from " + packet.getAddress().getHostAddress() + ":" + packet.getPort() + " with message:");
-                String message = new String(packet.getData(), 0, packet.getLength());
-                System.out.println(message);
+                System.out.println("Processando URL: " + url);
+                // Processa o URL aqui
+                processarURL(url);
+                System.out.println(index.toString());
+                
+            } catch (RemoteException e) {
+                System.out.println("[DOWNLOADER] Erro:" + e);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            assert socket != null;
-            socket.close();
         }
-        */
     }
     
     public static void main(String[] args) {
@@ -101,7 +76,7 @@ public class Downloader extends Thread implements Remote {
         }
     }
     
-    
+    /*
     public void getWebsites(String url) {
         if (url.equals("")) {
             System.out.print("URL is null or empty");
@@ -122,8 +97,96 @@ public class Downloader extends Thread implements Remote {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
-        
+    }
+    */
+    
+    private String obterConteudoDaPagina(String url) throws IOException {
+        Document document = Jsoup.connect(url).get();
+        return document.html();
+    }
+    
+    private String extrairTitulo(String conteudo) {
+        Document document = Jsoup.parse(conteudo);
+        Element titleElement = document.selectFirst("title");
+        return titleElement != null ? titleElement.text() : "";
+    }
+    
+    private String extrairTextSnippet(String conteudo) {
+        Document document = Jsoup.parse(conteudo);
+        Elements paragraphs = document.select("p");
+        if (!paragraphs.isEmpty()) {
+            return paragraphs.first().text();
+        }
+        return "";
+    }
+    
+    private Set<String> extrairPalavras(String conteudo) {
+        Set<String> words = new HashSet<>();
+        Document document = Jsoup.parse(conteudo);
+        String text = document.text();
+        String[] wordArray = text.split("\\s+");
+        for (String word : wordArray) {
+            word = word.replaceAll("[^a-zA-Z]", "").toLowerCase();
+            if (!word.isEmpty()) {
+                words.add(word);
+            }
+        }
+        return words;
+    }
+    
+    private void processarURL(String url) {
+        try {
+            // Obtenha o conteúdo da página aqui (usando JSoup, por exemplo)
+            String conteudo = obterConteudoDaPagina(url);
+            
+            // Extraia as informações relevantes da página
+            String title = extrairTitulo(conteudo);
+            String textSnippet = extrairTextSnippet(conteudo);
+            Set<String> words = extrairPalavras(conteudo);
+            
+            // Crie um objeto WebPage
+            WebPage webPage = new WebPage(url, title, textSnippet, words);
+            
+            // Adicione a página ao índice
+            for (String palavra : words) {
+                palavra = palavra.toLowerCase();
+                if (!index.containsKey(palavra)) {
+                    index.put(palavra, new HashSet<>());
+                }
+                index.get(palavra).add(webPage);
+            }
+            
+        } catch (Exception e) {
+            System.out.println("[DOWNLOADER] Erro: + e");
+        }
+    }
+    
+    public HashSet<WebPage> getWebPages(String palavra) {
+        palavra = palavra.toLowerCase();
+        return index.getOrDefault(palavra, new HashSet<>());
+    }
+    
+    public String getTitle(String url) {
+        for (HashSet<WebPage> pages : index.values()) {
+            for (WebPage page : pages) {
+                if (page.getUrl().equals(url)) {
+                    return page.getTitle();
+                }
+            }
+        }
+        return null;
+    }
+    
+    public String getTextSnippet(String url) {
+        for (HashSet<WebPage> pages : index.values()) {
+            for (WebPage page : pages) {
+                if (page.getUrl().equals(url)) {
+                    return page.getTextSnippet();
+                }
+                
+            }
+        }
+        return null;
     }
     
     private void sendMessage(String message) {
@@ -146,4 +209,52 @@ public class Downloader extends Thread implements Remote {
         return urlQueue.toString();
     }
 }
+
+class WebPage {
+    private String url;
+    private String title;
+    private String textSnippet;
+    private Set<String> words;
+    
+    public WebPage(String url, String title, String textSnippet, Set<String> words) {
+        this.url = url;
+        this.title = title;
+        this.textSnippet = textSnippet;
+        this.words = words;
+    }
+    
+    public String getUrl() {
+        return url;
+    }
+    
+    public void setUrl(String url) {
+        this.url = url;
+    }
+    
+    public String getTitle() {
+        return title;
+    }
+    
+    public void setTitle(String title) {
+        this.title = title;
+    }
+    
+    public String getTextSnippet() {
+        return textSnippet;
+    }
+    
+    public void setTextSnippet(String textSnippet) {
+        this.textSnippet = textSnippet;
+    }
+    
+    public Set<String> getWords() {
+        return words;
+    }
+    
+    public void setWords(Set<String> words) {
+        this.words = words;
+    }
+}
+
+
 

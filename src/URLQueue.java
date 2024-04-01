@@ -8,22 +8,22 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.rmi.Naming;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, Serializable {
-    private final Queue<String> urlQueue;
+    private final BlockingQueue<String> urlQueue;
     private URLQueueInterface queue;
+    
     
     public URLQueue() throws RemoteException {
         super();
-        this.urlQueue = new LinkedList<>();
+        this.urlQueue = new LinkedBlockingQueue<>();
+        
         try {
             LocateRegistry.createRegistry(1099);
             Naming.rebind("URLQUEUE", this);
@@ -36,9 +36,9 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
     public static void main(String[] args) {
         try {
             new URLQueue();
-            System.out.println("URL a incializar...");
+            System.out.println("URL inicializado com sucesso");
         } catch (Exception e) {
-            System.out.println("URLQueue err: " + e);
+            System.out.println("[URLQUEUE] Erro: " + e);
         }
     }
     
@@ -67,7 +67,7 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
             if (!isValidURL(link)) return "URL invalido";
             else if (this.urlQueue.contains(link)) return "URL já existe na fila";
             
-            this.urlQueue.add(link);
+            this.urlQueue.put(link);
             System.out.println("URL adicionado: " + link);
             return "URL valido";
         } catch (Exception e) {
@@ -75,8 +75,16 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
         }
     }
     
+    
+    
+    
     public String removerLink() throws RemoteException {
-        return this.urlQueue.poll();
+        try {
+            return this.urlQueue.take();
+        } catch (InterruptedException e) {
+            System.out.println("Erro: " + e);
+            return null;
+        }
     }
     
     @Override

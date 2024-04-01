@@ -51,7 +51,7 @@ public class RMIClient extends UnicastRemoteObject {
             
             String rmiHost = prop.getProperty("HOST_CLIENT");
             int rmiPort = Integer.parseInt(prop.getProperty("PORT_SERVER"));
-            String rmiRegistryName = prop.getProperty("SERVER_REGISTRY_NAME");
+            String rmiRegistryName = prop.getProperty("REGISTRY_NAME_SERVER");
             
             //Client client = new Client("Antonio", false);
             //RMIServerInterface svInterface = (RMIServerInterface) Naming.lookup(rmiRegistryName);

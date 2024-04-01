@@ -9,9 +9,7 @@ import org.jsoup.select.Elements;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
+import java.net.*;
 import java.rmi.Naming;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -19,29 +17,41 @@ import java.util.*;
 
 
 public class Downloader extends Thread implements Remote {
-    private final String multicastAddress;
+    //private final String multicastAddress;
     private final int multicastPort;
     private final InetAddress group;
     private final MulticastSocket socket;
     private final int idDownloader;
     private final URLQueueInterface urlQueue;
-    private final int totalDownloaders;
     private final HashMap<String, HashSet<WebPage>> index;
     
     
-    public Downloader(int id, int MULTICAST_PORT, String MULTICAST_ADDRESS, int totalDownloaders) throws Exception {
-        this.socket = null;
-        this.group = null;
-        this.multicastPort = MULTICAST_PORT;
-        this.multicastAddress = MULTICAST_ADDRESS;
+    public Downloader(int id, int multPort, String multAddress, String URLQueueName) throws Exception {
+        this.socket = new MulticastSocket(multPort);
+        this.group = InetAddress.getByName(multAddress);
+        socket.joinGroup(new InetSocketAddress(group, multPort), NetworkInterface.getByIndex(0));
+        this.multicastPort = multPort;
+        //this.multicastAddress = MULTICAST_ADDRESS;
         
         this.idDownloader = id;
-        this.totalDownloaders = totalDownloaders;
         
-        this.urlQueue = (URLQueueInterface) Naming.lookup("URLQUEUE");
+        this.urlQueue = (URLQueueInterface) Naming.lookup(URLQueueName);
         this.index = new HashMap<>();
         System.out.println("Download criado com sucesso");
-        start();
+    
+        while (true) {
+            String message = "testeee";
+            byte[] buffer = message.getBytes();
+        
+            InetAddress group = InetAddress.getByName(multAddress);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, multPort);
+            System.out.println("Enviando mensagem");
+            socket.send(packet);
+        
+            try { sleep((long) (Math.random() * 2500)); } catch (InterruptedException ignored) { }
+        }
+        
+        //start();
     }
     
     public void run() {
@@ -81,12 +91,14 @@ public class Downloader extends Thread implements Remote {
         try {
             prop.load(new FileInputStream(SETTINGS_PATH));
             
-            int port = Integer.parseInt(prop.getProperty("PORT_SERVER"));
-            String address = prop.getProperty("SERVER_REGISTRY_NAME");
+            int port = Integer.parseInt(prop.getProperty("MULTICAST_PORT"));
+            String address = prop.getProperty("MULTICAST_ADDRESS");
+            String urlQueueName = prop.getProperty("URL_QUEUE_REGISTRY_NAME");
+            
             
             int totalDownloaders = 50; // Número total de downloaders
             for (int i = 1; i <= totalDownloaders; i++) {
-                new Downloader(i, port, address, totalDownloaders);
+                new Downloader(i, port, address, urlQueueName);
             }
             //new Downloader(1, port, address, 5);
             

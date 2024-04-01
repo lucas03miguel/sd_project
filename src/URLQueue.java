@@ -2,6 +2,7 @@ package src;
 
 import interfaces.URLQueueInterface;
 
+import java.io.FileInputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -20,12 +21,12 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
     private URLQueueInterface queue;
     
     
-    public URLQueue() throws RemoteException {
+    public URLQueue(String urlQueueName, int urlQueuePort) throws RemoteException {
         super();
         this.urlQueue = new LinkedBlockingQueue<>();
         
         try {
-            LocateRegistry.createRegistry(1099);
+            LocateRegistry.createRegistry(urlQueuePort);
             Naming.rebind("URLQUEUE", this);
             
         } catch (Exception e) {
@@ -34,8 +35,17 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
     }
     
     public static void main(String[] args) {
+        System.getProperties().put("java.security.policy", "policy.all");
+        Properties prop = new Properties();
+        String SETTINGS_PATH = "properties/configuration.properties";
+    
         try {
-            new URLQueue();
+            prop.load(new FileInputStream(SETTINGS_PATH));
+            
+            int urlQueuePort = Integer.parseInt(prop.getProperty("URL_QUEUE_RMI_PORT"));
+            String urlQueueName = prop.getProperty("URL_QUEUE_REGISTRY_NAME");
+            
+            new URLQueue(urlQueueName, urlQueuePort);
             System.out.println("URL inicializado com sucesso");
         } catch (Exception e) {
             System.out.println("[URLQUEUE] Erro: " + e);

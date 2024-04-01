@@ -69,7 +69,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
             prop.load(new FileInputStream(SETTINGS_PATH));
             int rmiPort = Integer.parseInt(prop.getProperty("PORT_SERVER"));
             String rmiHost = prop.getProperty("HOST_SERVER");
-            String rmiRegistryName = prop.getProperty("SERVER_REGISTRY_NAME");
+            String rmiRegistryName = prop.getProperty("REGISTRY_NAME_SERVER");
             
             new RMIServer(rmiPort, rmiHost, rmiRegistryName);
         } catch (Exception e) {

@@ -1,31 +1,48 @@
 package src;
 
 import interfaces.RMIBarrelInterface;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.MulticastSocket;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.ArrayList;
+import java.util.Properties;
+
+import static java.lang.Thread.sleep;
 
 public class IndexStorageBarrels {
     private final int id;
-    private final String hostName;
-    private final int port;
-    private final String rmiRegister;
+    private final String barrelsHostName;
+    private final int barrelsPort;
+    private final String barrelsRMIRegister;
+    private final int multPort;
+    private final String multAddress;
+    private final MulticastSocket socket;
     private final ArrayList<Object> barrelsThreads;
+    private final InetAddress group;
     
-    public IndexStorageBarrels(int id, String host, int port, String rmiRegister) throws RemoteException {
+    public IndexStorageBarrels(int id, String host, int port, String rmiRegister, int multPort, String multAddress) throws Exception {
         super();
         this.id = id;
         this.barrelsThreads = new ArrayList<>();
-        this.hostName = host;
-        this.port = port;
-        this.rmiRegister = rmiRegister;
-    
-        LocateRegistry.createRegistry(1099);
-    
+        this.barrelsHostName = host;
+        this.barrelsPort = port;
+        this.barrelsRMIRegister = rmiRegister;
+        this.multPort = multPort;
+        this.multAddress = multAddress;
+        
+        LocateRegistry.createRegistry(port);
         try {
-            Naming.rebind("XPTO", (RMIBarrelInterface)this);
+            this.socket = new MulticastSocket();
+            this.group = InetAddress.getByName(multAddress);
+            
+            //Naming.rebind(rmiRegister, (RMIBarrelInterface)this);
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
@@ -34,7 +51,16 @@ public class IndexStorageBarrels {
     
     public void run() {
         try {
+            while (true) {
+                byte[] buffer = new byte[256];
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                System.out.println("Waiting for message");
+                socket.receive(packet);
         
+                System.out.println("Received packet from " + packet.getAddress().getHostAddress() + ":" + packet.getPort() + " with message:");
+                String message = new String(packet.getData(), 0, packet.getLength());
+                System.out.println(message);
+            }
         } catch (Exception re) {
             System.out.println("Exception in HelloImpl.main: " + re);
         }
@@ -42,9 +68,19 @@ public class IndexStorageBarrels {
     
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
-    
+        Properties prop = new Properties();
+        String SETTINGS_PATH = "properties/configuration.properties";
+        
         try {
-            new IndexStorageBarrels(1, "10.1.1.1", 5000, "barrelsDeVinho");
+            prop.load(new FileInputStream(SETTINGS_PATH));
+    
+            int multPort = Integer.parseInt(prop.getProperty("MULTICAST_PORT"));
+            String multAddress = prop.getProperty("MULTICAST_ADDRESS");
+            int port = Integer.parseInt(prop.getProperty("PORT_BARRELS"));
+            String host = prop.getProperty("HOST_BARRELS");
+            String rmiRegister = prop.getProperty("RMI_REGISTRY_NAME_BARRELS");
+            
+            new IndexStorageBarrels(1, host, port, rmiRegister, multPort, multAddress);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

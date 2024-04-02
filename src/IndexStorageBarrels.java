@@ -45,7 +45,7 @@ public class IndexStorageBarrels {
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
-        //run();
+        run();
     }
     
     public void run() {
@@ -102,6 +102,7 @@ public class IndexStorageBarrels {
             throw new RuntimeException(e);
         }
     }
+    
     
     
     /*

@@ -279,17 +279,19 @@ public class Downloader extends Thread implements Remote {
     private void sendMessage(String message) {
         try {
             this.sem.acquire();
-            //String message = this.getName() + " packet " + counter++;
-            byte[] buffer = message.getBytes();
-            
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, multicastPort);
-            this.socket.send(packet);
-            
-            this.sem.release();
+            try {
+                byte[] buffer = message.getBytes();
+                
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, multicastPort);
+                this.socket.send(packet);
+            } finally {
+                this.sem.release();
+            }
         } catch (Exception e) {
             System.out.println("[DOWNLOADER] Erro ao enviar mensagem: " + e);
         }
     }
+    
     public void cleanup() {
         if (this.socket != null && !this.socket.isClosed()) {
             this.socket.close();

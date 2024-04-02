@@ -13,33 +13,36 @@ import java.net.*;
 import java.rmi.Naming;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.text.Normalizer;
 import java.util.*;
 
 
 public class Downloader extends Thread implements Remote {
     //private final String multicastAddress;
-    private final int multicastPort;
+    private int multicastPort;
     private final InetAddress group;
-    private final MulticastSocket socket;
+    private MulticastSocket socket;
     private final int idDownloader;
     private final URLQueueInterface urlQueue;
-    private final HashMap<String, HashSet<WebPage>> index;
+    private final HashMap<String, HashSet<WebPage>> index = new HashMap<>();
     
     
     public Downloader(int id, int multPort, String multAddress, String URLQueueName) throws Exception {
-        this.socket = new MulticastSocket(multPort);
-        this.group = InetAddress.getByName(multAddress);
-        socket.joinGroup(new InetSocketAddress(group, multPort), NetworkInterface.getByIndex(0));
+        this.socket = new MulticastSocket();
         this.multicastPort = multPort;
+        this.group = InetAddress.getByName(multAddress);
+        this.multicastPort = multPort;
+        
+        
         //this.multicastAddress = MULTICAST_ADDRESS;
         
         this.idDownloader = id;
         
         this.urlQueue = (URLQueueInterface) Naming.lookup(URLQueueName);
-        this.index = new HashMap<>();
+        //this.index = new HashMap<>();
         System.out.println("Download criado com sucesso");
-        start();
     
+        /*
         while (true) {
             String message = "testeee";
             byte[] buffer = message.getBytes();
@@ -51,18 +54,15 @@ public class Downloader extends Thread implements Remote {
         
             try { sleep((long) (Math.random() * 2500)); } catch (InterruptedException ignored) { }
         }
-            
+        
+         */
+        
+        start();
     }
     
     public void run() {
         while (true) {
             try {
-                byte[] buffer = new byte[1024];
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                socket.receive(packet);
-                String message = new String(packet.getData(), 0, packet.getLength());
-                System.out.println("Mensagem recebida: " + message);
-
                 String url = null;
                 synchronized (urlQueue) {
                     if (!urlQueue.isEmpty()) {
@@ -74,11 +74,11 @@ public class Downloader extends Thread implements Remote {
                         urlQueue.removerLink(url);
                     }
                 }
-
+                
                 if (url != null) {
                     System.out.println("Processando URL: " + url);
                     processarURL(url);
-                    printIndex();
+                    //printIndex();
                 } else {
                     sleep(1000);
                 }
@@ -137,28 +137,24 @@ public class Downloader extends Thread implements Remote {
     }
     */
     
-    private String extrairTitulo(String conteudo) {
-        Document document = Jsoup.parse(conteudo);
-        Element titleElement = document.selectFirst("title");
-        return titleElement != null ? titleElement.text() : "";
+    private String extrairTitulo(Document doc) {
+        String title = doc.title();
+        return title != null ? title : "";
     }
     
-    private String extrairCitacao(String conteudo) {
-        Document document = Jsoup.parse(conteudo);
-        Elements paragraphs = document.select("p");
-        if (!paragraphs.isEmpty()) {
-            return paragraphs.first().text();
-        }
-        return "";
+    private String extrairCitacao(Document doc) {
+        Elements paragraphs = doc.select("p");
+        return !paragraphs.isEmpty() ? paragraphs.first().text() : "";
     }
     
-    private Set<String> extrairPalavras(String conteudo) {
+    private Set<String> extrairPalavras(Document doc) {
         HashSet<String> words = new HashSet<>();
-        Document document = Jsoup.parse(conteudo);
-        String text = document.text();
+        String text = doc.text();
         String[] wordArray = text.split("\\s+");
         for (String word : wordArray) {
-            word = word.replaceAll("[^\\p{L}]", "").toLowerCase();
+            String normalizedText = Normalizer.normalize(word, Normalizer.Form.NFD);
+            normalizedText = normalizedText.replaceAll("\\p{M}", "");
+            word = normalizedText.replaceAll("[^a-zA-Z0-9 ]", "");
             if (word.length() > 2) {
                 words.add(word);
             }
@@ -166,12 +162,14 @@ public class Downloader extends Thread implements Remote {
         return words;
     }
     
+    /*
     public void printIndex() {
+        
         for (Map.Entry<String, HashSet<WebPage>> entry : index.entrySet()) {
             String word = entry.getKey();
             HashSet<WebPage> pages = entry.getValue();
             System.out.println("Palavra: " + word);
-            /*
+            
             System.out.println(" Páginas:");
             for (WebPage page : pages) {
                 System.out.println("  URL: " + page.getUrl());
@@ -179,10 +177,13 @@ public class Downloader extends Thread implements Remote {
                 System.out.println();
             }
             
-             */
+            
             System.out.println("-----------------------------");
         }
     }
+    
+     */
+    
     
     private void processarURL(String url) {
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
@@ -191,14 +192,14 @@ public class Downloader extends Thread implements Remote {
         
         try {
             Document document = Jsoup.connect(url).get();
-            String conteudo = document.html();
             
-            String title = extrairTitulo(conteudo);
-            String textSnippet = extrairCitacao(conteudo);
-            Set<String> words = extrairPalavras(conteudo);
+            String title = extrairTitulo(document);
+            String textSnippet = extrairCitacao(document);
+            Set<String> words = extrairPalavras(document);
             
             WebPage webPage = new WebPage(url, title, textSnippet, words);
             
+            /*
             for (String palavra : words) {
                 palavra = palavra.toLowerCase();
                 if (!index.containsKey(palavra)) {
@@ -206,6 +207,10 @@ public class Downloader extends Thread implements Remote {
                 }
                 index.get(palavra).add(webPage);
             }
+            
+            printIndex();
+            */
+            
             
             /*
             Elements links = document.select("a[href]");

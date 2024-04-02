@@ -269,7 +269,7 @@ public class RMIClient extends UnicastRemoteObject {
             if (parts[0].equals("-1")) {
                 System.out.println("[CLIENT] Registo falhou: erro no servidor");
                 return -1;
-            } else if (parts[0].equals("1")) {
+            } else if (parts[0].equals("1") || parts[0].equals("2")) {
                 String username = parts[1];
                 
                 System.out.println("[CLIENT] Registo falhou: user " + username + " ja existe");
@@ -283,24 +283,33 @@ public class RMIClient extends UnicastRemoteObject {
                     }
                 } while (!choice.equalsIgnoreCase("s") && !choice.equalsIgnoreCase("n"));
                 if (choice.equalsIgnoreCase("n")) {
-                    return 0;
+                    return 0; // Exit the registration process
                 }
-            } else {
-                System.out.println(Arrays.toString(parts));
-                String username = parts[1];
-                String password = parts[2];
-                String res = this.serverInterface.checkRegisto(username, password);
-                
-                if (res.equals("Erro no lado do servidor")) {
-                    System.out.println("[CLIENT] Registo falhou: erro no servidor");
-                    return -1;
+                // If the user chooses to try again, the loop will continue, prompting for new input.
+            } else if (parts[0].equals("0")) {
+                // This condition is for when the user does not exist and we need to register them.
+                // Ensure that parts[2] exists before trying to access it.
+                if (parts.length > 2) {
+                    String username = parts[1];
+                    String password = parts[2];
+                    String res = this.serverInterface.checkRegisto(username, password);
+                    
+                    if (res.equals("Erro no lado do servidor")) {
+                        System.out.println("[CLIENT] Registo falhou: erro no servidor");
+                        return -1;
+                    } else {
+                        System.out.println("[CLIENT] " + res);
+                        return 1; // Successful registration
+                    }
                 } else {
-                    System.out.println("[CLIENT] " + res);
-                    return 1;
+                    System.out.println("[CLIENT] Registo falhou: dados insuficientes fornecidos.");
+                    return -1;
                 }
             }
         }
     }
+    
+    
     /*
     
     public void printar(String s) throws RemoteException {

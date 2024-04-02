@@ -44,8 +44,13 @@ public class Downloader extends Thread implements Remote {
         
         this.urlQueue = (URLQueueInterface) Naming.lookup(URLQueueName);
         //this.index = new HashMap<>();
+        byte[] buffer = new byte[256];
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        this.socket.receive(packet);
+        String message = new String(packet.getData(), 0, packet.getLength());
+        System.out.println(message);
         System.out.println("Download " + id + " criado com sucesso");
-    
+        
         /*
         while (true) {
             String message = "testeee";

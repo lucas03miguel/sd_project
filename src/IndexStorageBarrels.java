@@ -32,19 +32,18 @@ public class IndexStorageBarrels {
         this.barrelsPort = port;
         this.barrelsRMIRegister = rmiRegister;
         
+        
         LocateRegistry.createRegistry(port);
-        try {
-            this.multPort = multPort;
-            this.multAddress = multAddress;
-            this.socket = new MulticastSocket(multPort);
-            this.group = InetAddress.getByName(multAddress);
-            this.socket.joinGroup(new InetSocketAddress(group, multPort), NetworkInterface.getByIndex(0));
-            
-            
-            //Naming.rebind(rmiRegister, (RMIBarrelInterface)this);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+        this.multPort = multPort;
+        this.multAddress = multAddress;
+        this.socket = new MulticastSocket(multPort);
+        this.group = InetAddress.getByName(multAddress);
+        this.socket.joinGroup(new InetSocketAddress(group, multPort), NetworkInterface.getByIndex(0));
+        
+        
+        this.socket.send(new DatagramPacket(("OIIIIIIIIIIII").getBytes(), ("OIIIIIIIIIIII").length(), group, multPort));
+        //Naming.rebind(rmiRegister, (RMIBarrelInterface)this);
+        
         run();
     }
     
@@ -77,8 +76,8 @@ public class IndexStorageBarrels {
                     
                 }
             }
-        } catch (Exception re) {
-            System.out.println("Exception in HelloImpl.main: " + re);
+        } catch (Exception e) {
+            System.out.println("Erro: " + e);
         }
         
     }

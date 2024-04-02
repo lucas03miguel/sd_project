@@ -12,9 +12,9 @@ import java.io.IOException;
 import java.net.*;
 import java.rmi.Naming;
 import java.rmi.Remote;
-import java.rmi.RemoteException;
 import java.text.Normalizer;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
 
 public class Downloader extends Thread implements Remote {
@@ -24,11 +24,14 @@ public class Downloader extends Thread implements Remote {
     private MulticastSocket socket;
     private final int idDownloader;
     private final URLQueueInterface urlQueue;
+    
+    private final Semaphore sem;
     private final HashMap<String, HashSet<WebPage>> index = new HashMap<>();
     private final HashMap<String, HashSet<String>> links = new HashMap<>();
     
     
-    public Downloader(int id, int multPort, String multAddress, String URLQueueName) throws Exception {
+    public Downloader(int id, int multPort, String multAddress, String URLQueueName, Semaphore sem) throws Exception {
+        this.sem = sem;
         this.socket = new MulticastSocket();
         this.multicastPort = multPort;
         this.group = InetAddress.getByName(multAddress);
@@ -41,7 +44,7 @@ public class Downloader extends Thread implements Remote {
         
         this.urlQueue = (URLQueueInterface) Naming.lookup(URLQueueName);
         //this.index = new HashMap<>();
-        System.out.println("Download criado com sucesso");
+        System.out.println("Download " + id + " criado com sucesso");
     
         /*
         while (true) {
@@ -57,8 +60,7 @@ public class Downloader extends Thread implements Remote {
         }
         
          */
-        
-        start();
+        //start();
     }
     
     public void run() {
@@ -94,24 +96,27 @@ public class Downloader extends Thread implements Remote {
         System.getProperties().put("java.security.policy", "policy.all");
         Properties prop = new Properties();
         String SETTINGS_PATH = "properties/configuration.properties";
-        
+        Downloader d = null;
         try {
             prop.load(new FileInputStream(SETTINGS_PATH));
             
             int port = Integer.parseInt(prop.getProperty("MULTICAST_PORT"));
             String address = prop.getProperty("MULTICAST_ADDRESS");
             String urlQueueName = prop.getProperty("URL_QUEUE_REGISTRY_NAME");
-            
-            
+    
+            Semaphore sem = new Semaphore(1);
             int totalDownloaders = 50; // Número total de downloaders
             for (int i = 1; i <= totalDownloaders; i++) {
-                new Downloader(i, port, address, urlQueueName);
+                d = new Downloader(i, port, address, urlQueueName, sem);
+                d.start();
             }
             //new Downloader(1, port, address, 5);
             
         } catch (Exception e) {
             System.out.println("[DOWNLOADER] Erro");
         }
+        assert d != null;
+        d.cleanup();
     }
     
     /*
@@ -273,19 +278,24 @@ public class Downloader extends Thread implements Remote {
     
     private void sendMessage(String message) {
         try {
+            this.sem.acquire();
             //String message = this.getName() + " packet " + counter++;
             byte[] buffer = message.getBytes();
             
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, multicastPort);
-            socket.send(packet);
+            this.socket.send(packet);
             
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            assert socket != null;
-            socket.close();
+            this.sem.release();
+        } catch (Exception e) {
+            System.out.println("[DOWNLOADER] Erro ao enviar mensagem: " + e);
         }
     }
+    public void cleanup() {
+        if (this.socket != null && !this.socket.isClosed()) {
+            this.socket.close();
+        }
+    }
+    
     
     public String getUrlQueue() {
         return urlQueue.toString();

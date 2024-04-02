@@ -96,8 +96,11 @@ public class IndexStorageBarrels {
             int port = Integer.parseInt(prop.getProperty("PORT_BARRELS"));
             String host = prop.getProperty("HOST_BARRELS");
             String rmiRegister = prop.getProperty("RMI_REGISTRY_NAME_BARRELS");
-            
-            new IndexStorageBarrels(1, host, port, rmiRegister, multPort, multAddress);
+    
+            for (int i = 1; i < 4; i++) {
+                
+                new IndexStorageBarrels(i, host, port, rmiRegister, multPort, multAddress);
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

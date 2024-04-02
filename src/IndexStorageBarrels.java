@@ -33,7 +33,7 @@ public class IndexStorageBarrels {
         this.barrelsRMIRegister = rmiRegister;
         
         
-        LocateRegistry.createRegistry(port);
+        //LocateRegistry.createRegistry(port);
         this.multPort = multPort;
         this.multAddress = multAddress;
         this.socket = new MulticastSocket(multPort);
@@ -41,23 +41,35 @@ public class IndexStorageBarrels {
         this.socket.joinGroup(new InetSocketAddress(group, multPort), NetworkInterface.getByIndex(0));
         
         
-        this.socket.send(new DatagramPacket(("OIIIIIIIIIIII").getBytes(), ("OIIIIIIIIIIII").length(), group, multPort));
-        //Naming.rebind(rmiRegister, (RMIBarrelInterface)this);
+        String message = "OIIIIIIIIIIIIIII";
+        //while (true) {
+        byte[] buffer = message.getBytes();
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, multPort);
+        //System.out.println("Enviando pacote");
+        this.socket.send(packet);
+        System.out.println("Pacote enviado");
         
-        run();
+        Thread.sleep(1000); // Aguarda 1 segundo antes de enviar a próxima mensagem
+        //}
+        //Naming.rebind(rmiRegister, (RMIBarrelInterface)this);
+        //byte[] buffer = new byte[256];
+        //DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        //socket.receive(packet);
+    
+        //System.out.println("Received packet from " + packet.getAddress().getHostAddress() + ":" + packet.getPort() + " with message:");
+        //String message = new String(packet.getData(), 0, packet.getLength());
+        //System.out.println("ududhdhdhd");
+        //System.out.println(message);
+        
+        //run();
     }
     
     public void run() {
         try {
             while (true) {
-                byte[] buffer = new byte[256];
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                socket.receive(packet);
                 
-                //System.out.println("Received packet from " + packet.getAddress().getHostAddress() + ":" + packet.getPort() + " with message:");
-                String message = new String(packet.getData(), 0, packet.getLength());
-                System.out.println(message);
-    
+                
+                /*
                 String[] list = message.split(";");
                 //String id = list[0].split(":")[1];
                 String type = list[0].split("\\|")[1];
@@ -75,6 +87,8 @@ public class IndexStorageBarrels {
                     
                     
                 }
+                
+                 */
             }
         } catch (Exception e) {
             System.out.println("Erro: " + e);
@@ -96,12 +110,14 @@ public class IndexStorageBarrels {
             String host = prop.getProperty("HOST_BARRELS");
             String rmiRegister = prop.getProperty("RMI_REGISTRY_NAME_BARRELS");
     
-            for (int i = 1; i < 4; i++) {
+    
+            LocateRegistry.createRegistry(port);
+            for (int i = 1; i < 5; i++) {
                 
                 new IndexStorageBarrels(i, host, port, rmiRegister, multPort, multAddress);
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.println("[INDEX-STORAGE-BARRELS] Erro: " + e);
         }
     }
     

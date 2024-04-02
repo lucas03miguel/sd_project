@@ -32,23 +32,28 @@ public class Downloader extends Thread implements Remote {
     
     public Downloader(int id, int multPort, String multAddress, String URLQueueName, Semaphore sem) throws Exception {
         this.sem = sem;
-        this.socket = new MulticastSocket();
+        this.socket = new MulticastSocket(multPort);
         this.multicastPort = multPort;
         this.group = InetAddress.getByName(multAddress);
-        this.multicastPort = multPort;
-        
-        
+        //this.multicastPort = multPort;
         //this.multicastAddress = MULTICAST_ADDRESS;
         
         this.idDownloader = id;
         
         this.urlQueue = (URLQueueInterface) Naming.lookup(URLQueueName);
+        
+        this.socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkInterface.getByIndex(0));
         //this.index = new HashMap<>();
         byte[] buffer = new byte[256];
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        
         this.socket.receive(packet);
+        
+        
         String message = new String(packet.getData(), 0, packet.getLength());
         System.out.println(message);
+        
+        
         System.out.println("Download " + id + " criado com sucesso");
         
         /*

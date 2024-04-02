@@ -49,23 +49,38 @@ public class IndexStorageBarrels {
     }
     
     public void run() {
-        /*
         try {
             while (true) {
                 byte[] buffer = new byte[256];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                System.out.println("Waiting for message");
                 socket.receive(packet);
-        
-                System.out.println("Received packet from " + packet.getAddress().getHostAddress() + ":" + packet.getPort() + " with message:");
+                
+                //System.out.println("Received packet from " + packet.getAddress().getHostAddress() + ":" + packet.getPort() + " with message:");
                 String message = new String(packet.getData(), 0, packet.getLength());
                 System.out.println(message);
+    
+                String[] list = message.split(";");
+                //String id = list[0].split(":")[1];
+                String type = list[0].split("\\|")[1];
+                
+                if (type.equals("url")) {
+                    //TODO: implementem esta shit de merda
+                    
+                    
+                } else if (type.equals("words")) {
+                    //TODO: implementem esta shit
+                    
+                    
+                } else if (type.equals("textSnippet")) {
+                    //TODO: implementem esta shit
+                    
+                    
+                }
             }
         } catch (Exception re) {
             System.out.println("Exception in HelloImpl.main: " + re);
         }
         
-         */
     }
     
     public static void main(String[] args) {

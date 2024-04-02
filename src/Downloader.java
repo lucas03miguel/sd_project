@@ -199,6 +199,20 @@ public class Downloader extends Thread implements Remote {
             
             WebPage webPage = new WebPage(url, title, textSnippet, words);
             
+            StringBuilder message = new StringBuilder("type | words; words_count | " + words.size());
+            for (String word : words) {
+                message.append("; word | ").append(word);
+            }
+            System.out.println("[DOWNLOADER] Enviando palavras: " + message);
+            sendMessage(message.toString());
+            
+            message = new StringBuilder("type | textSnippet; textSnippet | ").append(textSnippet);
+            System.out.println("[DOWNLOADER] Enviando snippet: " + message);
+            sendMessage(message.toString());
+            
+            message = new StringBuilder("type | url; url | ").append(url);
+            System.out.println("[DOWNLOADER] Enviando url: " + message);
+            sendMessage(message.toString());
             /*
             for (String palavra : words) {
                 palavra = palavra.toLowerCase();

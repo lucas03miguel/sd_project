@@ -132,24 +132,24 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
                 System.setProperty("java.rmi.server.hostname", host);
         
                 r.rebind(rmiRegister, mainBarrel);
-                System.out.println("[BARREL-INTERFACE] BARREL RMI registry created on: " + host + ":" + port + "->" + rmiRegister);
+                System.out.println("[BARREL-INTERFACE] BARREL RMI criado no seguinte:" + host + ":" + port + "->" + rmiRegister);
                 
             } catch (RemoteException e) {
-                System.out.println("[BARREL-INTERFACE] RemoteException, could not create registry. Retrying in 1 second...");
+                System.out.println("[BARREL-INTERFACE] RemoteException, não foi possível criar o registry. A tentar novamente em 1 segundo...");
         
                 try {
                     Thread.sleep(1000);
                     mainBarrel.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(host, port).lookup(rmiRegister);
                     mainBarrel.backUp(port, host, rmiRegister);
                 } catch (InterruptedException | NotBoundException | RemoteException ei) {
-                    System.out.println("[EXCEPTION] InterruptedException | NotBoundException | RemoteException" + e);
+                    System.out.println("[ERRO]" + ei);
                 }
             }
     
             for (int i = 1; i < 5; i++) {
         
                 if (host == null || port == 0 || rmiRegister == null || multAddress == null || multPort == 0) {
-                    System.out.println("[BARREL " + i + "] Error reading properties file");
+                    System.out.println("[BARREL " + i + "] Erro ao ler as propriedades do ficheiro de configuração.");
                     System.exit(1);
                 }
         
@@ -179,7 +179,7 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
     public Barrel selectBarrelToExcute() {
         // escolhe um barril aleatório para executar a tarefa
         if (this.barrelsThreads.size() == 0) {
-            System.out.println("[BARREL-INTERFACE] No barrels available. Waiting for a barrel to become available...");
+            System.out.println("[BARREL-INTERFACE] Nenhum barrel disponivel. À espera que um barrel fique disponivel...");
             // wait for a short period and try again
             try {
                 Thread.sleep(1000); // wait for 1 second
@@ -193,7 +193,7 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
         
         // verificar se o barril está vivo, se não estiver remover da lista e selecionar outro barril
         if (!this.barrelsThreads.get(random).isAlive()) {
-            System.out.println("[BARREL-INTERFACE] Barrel " + random + " is not alive");
+            System.out.println("[BARREL-INTERFACE] Barrel " + random + " não está vivo. A remover da lista...");
             this.barrelsThreads.remove(random);
             return this.selectBarrelToExcute();
         }
@@ -207,24 +207,24 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
                 Barrel barrel_t = selectBarrelToExcute();
             
                 if (this.barrel.alive()) {
-                    System.out.println("[BARREL] Connection to RMI server reestablished");
+                    System.out.println("[BARREL] Conexão estabelecida com sucesso.");
                     break;
                 }
             } catch (RemoteException e) {
-                System.out.println("[BARREL] RemoteException, Getting connection, retrying in 1 second...");
+                System.out.println("[Erro] " + e + ". A tentar novamente em 1 segundo...");
                 for (int i = 0; i < 15; i++) {
                     try {
                         Thread.sleep(1000);
                         this.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegister);
                     } catch (RemoteException er) {
-                        System.out.println("[EXCEPTION] RemoteException, could not create registry. Retrying in 1 second...");
+                        System.out.println("[Erro]" + er);
                         this.barrel = null;
                     } catch (InterruptedException ei) {
-                        System.out.println("[EXCEPTION] InterruptedException");
+                        System.out.println("[Erro]" + ei);
                         ei.printStackTrace();
                         return;
                     } catch (NotBoundException en) {
-                        System.out.println("[EXCEPTION] NotBoundException");
+                        System.out.println("[Erro]" + en);
                         en.printStackTrace();
                         return;
                     }

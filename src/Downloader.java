@@ -32,17 +32,18 @@ public class Downloader extends Thread implements Remote {
     
     public Downloader(int id, int multPort, String multAddress, String URLQueueName, Semaphore sem) throws Exception {
         this.sem = sem;
-        this.socket = new MulticastSocket(multPort);
+        this.idDownloader = id;
         this.multicastPort = multPort;
+        this.socket = new MulticastSocket(multPort);
         this.group = InetAddress.getByName(multAddress);
+        this.socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkInterface.getByIndex(0));
+        this.urlQueue = (URLQueueInterface) Naming.lookup(URLQueueName);
+    
+        System.out.println("Downloader " + id + " criado com sucesso");
+        
+        /*
         //this.multicastPort = multPort;
         //this.multicastAddress = MULTICAST_ADDRESS;
-        
-        this.idDownloader = id;
-        
-        this.urlQueue = (URLQueueInterface) Naming.lookup(URLQueueName);
-        
-        this.socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkInterface.getByIndex(0));
         //this.index = new HashMap<>();
         byte[] buffer = new byte[256];
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -56,7 +57,6 @@ public class Downloader extends Thread implements Remote {
         
         System.out.println("Download " + id + " criado com sucesso");
         
-        /*
         while (true) {
             String message = "testeee";
             byte[] buffer = message.getBytes();
@@ -68,9 +68,8 @@ public class Downloader extends Thread implements Remote {
         
             try { sleep((long) (Math.random() * 2500)); } catch (InterruptedException ignored) { }
         }
-        
-         */
         //start();
+        */
     }
     
     public void run() {
@@ -101,7 +100,6 @@ public class Downloader extends Thread implements Remote {
         }
     }
     
-    
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
         Properties prop = new Properties();
@@ -123,7 +121,7 @@ public class Downloader extends Thread implements Remote {
             //new Downloader(1, port, address, 5);
             
         } catch (Exception e) {
-            System.out.println("[DOWNLOADER] Erro");
+            System.out.println("[DOWNLOADER] Erro: " + e);
         }
         assert d != null;
         d.cleanup();
@@ -200,7 +198,6 @@ public class Downloader extends Thread implements Remote {
     
      */
     
-    
     private void processarURL(String url) {
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             url = "https://".concat(url);
@@ -254,7 +251,6 @@ public class Downloader extends Thread implements Remote {
             System.out.println("[DOWNLOADER] Erro: " + e);
         }
     }
-    
     /*
     public HashSet<WebPage> getWebPages(String palavra) {
         palavra = palavra.toLowerCase();
@@ -307,7 +303,6 @@ public class Downloader extends Thread implements Remote {
             this.socket.close();
         }
     }
-    
     
     public String getUrlQueue() {
         return urlQueue.toString();

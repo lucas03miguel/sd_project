@@ -1,5 +1,8 @@
 package interfaces;
 
+import src.Barrel;
+import src.IndexStorageBarrels;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -7,7 +10,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public interface RMIBarrelInterface extends Remote{
+    void guardarURLs(String[] list);
+    Barrel selectBarrelToExcute();
     boolean alive() throws RemoteException;
+    /*
     
     ArrayList<String> checkUserRegistration(String username, String password, String firstName, String lastName) throws RemoteException;
     ArrayList<String> verifyUser(String username, String password) throws RemoteException;
@@ -24,5 +30,6 @@ public interface RMIBarrelInterface extends Remote{
     ArrayList<String> saveWordSearches(String phrase) throws RemoteException;
     
     HashMap<String, Integer> getTop10Searches() throws RemoteException;
-    
+    */
+    //IndexStorageBarrels selectBarrelToExcute();
 }

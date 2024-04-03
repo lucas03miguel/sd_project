@@ -1,5 +1,6 @@
 package src;
 
+import interfaces.RMIBarrelInterface;
 import interfaces.RMIServerInterface;
 import interfaces.URLQueueInterface;
 
@@ -21,6 +22,7 @@ import static java.lang.Thread.sleep;
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
     HashMap<String, Client> clientes;
     private URLQueueInterface urlQueue;
+    private RMIBarrelInterface barrel;
     
     
     public RMIServer(int rmiPort, String rmiHost, String rmiRegistryName) throws RemoteException {
@@ -89,6 +91,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     
     @Override
     public void pesquisar(String s) throws RemoteException {
+        this.barrel.selectBarrelToExcute();
         System.out.println("> " + s);
         //print_on_all_clients(s);
     }

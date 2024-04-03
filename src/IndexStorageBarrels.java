@@ -3,10 +3,7 @@ package src;
 import interfaces.RMIBarrelInterface;
 
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.net.*;
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -23,9 +20,9 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
     private final String barrelsRMIRegister;
     private final int multPort;
     private final String multAddress;
-    private final MulticastSocket socket;
     private final ArrayList<Barrel> barrelsThreads;
-    private final InetAddress group;
+    //private final MulticastSocket socket;
+    //private final InetAddress group;
     private RMIBarrelInterface barrel;
     
     public IndexStorageBarrels(int id, String host, int port, String rmiRegister, int multPort, String multAddress) throws Exception {
@@ -35,13 +32,14 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
         this.barrelsHostName = host;
         this.barrelsPort = port;
         this.barrelsRMIRegister = rmiRegister;
-        
+    
         //LocateRegistry.createRegistry(port);
         this.multPort = multPort;
         this.multAddress = multAddress;
-        this.socket = new MulticastSocket(multPort);
-        this.group = InetAddress.getByName(multAddress);
-        this.socket.joinGroup(new InetSocketAddress(group, multPort), NetworkInterface.getByIndex(0));
+        //this.socket = new MulticastSocket(multPort);
+        //this.group = InetAddress.getByName(multAddress);
+        //this.socket.joinGroup(new InetSocketAddress(group, multPort), NetworkInterface.getByIndex(0));
+
         
         
         /*
@@ -65,50 +63,8 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
         //System.out.println("ududhdhdhd");
         //System.out.println(message);
         */
-        start();
+        //start();
     }
-    
-    public void run() {
-        try {
-            while (true) {
-                byte[] buffer = new byte[256];
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                socket.receive(packet);
-                String message = new String(packet.getData(), 0, packet.getLength());
-                System.out.println("Recebi boi " + message);
-    
-    
-                String[] list = message.split(";");
-                //String id = list[0].split(":")[1];
-                String type = list[0].split(" \\| ")[1];
-    
-                System.out.println("type: " + type + "\n\n");
-                if (type.equals("url")) {
-                    //TODO: implementem esta shit de merda
-                    String url = list[1].split(" \\| ")[1];
-                    System.out.println("entrei no url " + url);
-                    guardarURLs(list);
-    
-    
-                } else if (type.equals("words")) {
-                    //TODO: implementem esta shit
-                    System.out.println("entrei no words");
-    
-                } else if (type.equals("textSnippet")) {
-                    //TODO: implementem esta shit
-                    System.out.println("entrei no snippet");
-    
-    
-                }
-    
-    
-            }
-        } catch (Exception e) {
-            System.out.println("Erro: " + e);
-        }
-    
-    }
-    
     
     
     public static void main(String[] args) {
@@ -127,7 +83,6 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
     
             IndexStorageBarrels mainBarrel = new IndexStorageBarrels(0, host, port, rmiRegister, multPort, multAddress);
             try {
-                // create the registry
                 Registry r = LocateRegistry.createRegistry(port);
                 System.setProperty("java.rmi.server.hostname", host);
         
@@ -140,13 +95,13 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
                 try {
                     Thread.sleep(1000);
                     mainBarrel.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(host, port).lookup(rmiRegister);
-                    mainBarrel.backUp(port, host, rmiRegister);
+                    mainBarrel.tentarNovamente(port, host, rmiRegister);
                 } catch (InterruptedException | NotBoundException | RemoteException ei) {
                     System.out.println("[EXCEPTION] InterruptedException | NotBoundException | RemoteException" + e);
                 }
             }
     
-            for (int i = 1; i < 5; i++) {
+            for (int i = 1; i < 2; i++) {
         
                 if (host == null || port == 0 || rmiRegister == null || multAddress == null || multPort == 0) {
                     System.out.println("[BARREL " + i + "] Error reading properties file");
@@ -160,23 +115,20 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
                 //Database files = new Database();
                 Barrel barrel_t = new Barrel(i, port, multAddress);
                 mainBarrel.barrelsThreads.add(barrel_t);
-                barrel_t.start();
+                //barrel_t.start();
             }
+            
         } catch (Exception e) {
             System.out.println("[INDEX-STORAGE-BARRELS] Erro: " + e);
         }
     }
     
-    public void guardarURLs(String[] list) {
-    
-    }
-    
     public boolean alive() throws RemoteException {
-        Barrel barrel = this.selectBarrelToExcute();
+        Barrel barrel = this.selecionarBarrel();
         return barrel != null;
     }
     
-    public Barrel selectBarrelToExcute() {
+    public Barrel selecionarBarrel() {
         // escolhe um barril aleatório para executar a tarefa
         if (this.barrelsThreads.size() == 0) {
             System.out.println("[BARREL-INTERFACE] No barrels available. Waiting for a barrel to become available...");
@@ -186,7 +138,7 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            return selectBarrelToExcute(); // recursive call to try again
+            return selecionarBarrel(); // recursive call to try again
         }
         
         int random = (int) (Math.random() * this.barrelsThreads.size());
@@ -195,18 +147,15 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
         if (!this.barrelsThreads.get(random).isAlive()) {
             System.out.println("[BARREL-INTERFACE] Barrel " + random + " is not alive");
             this.barrelsThreads.remove(random);
-            return this.selectBarrelToExcute();
+            return this.selecionarBarrel();
         }
-        
         return this.barrelsThreads.get(random);
     }
     
-    private void backUp(int rmiPort, String rmiHost, String rmiRegister) throws RemoteException {
+    private void tentarNovamente(int rmiPort, String rmiHost, String rmiRegister) throws RemoteException {
         while (true) {
             try {
-                Barrel barrel_t = selectBarrelToExcute();
-            
-                if (this.barrel.alive()) {
+                if (this.barrel != null && this.barrel.alive()) {
                     System.out.println("[BARREL] Connection to RMI server reestablished");
                     break;
                 }
@@ -219,18 +168,13 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
                     } catch (RemoteException er) {
                         System.out.println("[EXCEPTION] RemoteException, could not create registry. Retrying in 1 second...");
                         this.barrel = null;
-                    } catch (InterruptedException ei) {
-                        System.out.println("[EXCEPTION] InterruptedException");
+                    } catch (Exception ei) {
+                        System.out.println("[EXCEPTION] Erro: " + ei);
                         ei.printStackTrace();
-                        return;
-                    } catch (NotBoundException en) {
-                        System.out.println("[EXCEPTION] NotBoundException");
-                        en.printStackTrace();
                         return;
                     }
                 }
             }
         }
     }
-    
 }

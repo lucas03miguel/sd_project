@@ -91,7 +91,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     
     @Override
     public void pesquisar(String s) throws RemoteException {
-        this.barrel.selectBarrelToExcute();
+        this.barrel.selecionarBarrel();
         System.out.println("> " + s);
         //print_on_all_clients(s);
     }

@@ -10,8 +10,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public interface RMIBarrelInterface extends Remote{
-    void guardarURLs(String[] list);
-    Barrel selectBarrelToExcute();
+    //void guardarURLs(String[] list);
+    Barrel selecionarBarrel();
     boolean alive() throws RemoteException;
     /*
     

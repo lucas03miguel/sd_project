@@ -11,7 +11,7 @@ import java.util.HashSet;
 
 public interface RMIBarrelInterface extends Remote{
     //void guardarURLs(String[] list);
-    Barrel selecionarBarrel();
+    Barrel selecionarBarrel() throws RemoteException;
     boolean alive() throws RemoteException;
     /*
     

@@ -59,12 +59,24 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
     }
     
      */
+    public static String formatURL(String urlString) {
+        if (!urlString.contains("http://") && !urlString.contains("https://")) {
+            urlString = "https://" + urlString;
+        }
+    
+        if (!urlString.contains("www.")) {
+            urlString = urlString.replace("://", "://www.");
+        }
+    
+        return urlString;
+    }
+    
     public static boolean isValidURL(String urlString) {
         try {
             URI uri = new URI(urlString);
             if (uri.getScheme() == null || uri.getHost() == null)
                 return false;
-        
+            
             URL __ = uri.toURL();
             return true;
         } catch (URISyntaxException | MalformedURLException e) {
@@ -74,6 +86,7 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
     
     public String inserirLink(String link) throws RemoteException {
         try {
+            link = formatURL(link);
             if (!isValidURL(link)) return "URL invalido";
             else if (this.urlQueue.contains(link)) return "URL já existe na fila";
             

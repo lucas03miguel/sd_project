@@ -8,7 +8,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.*;
 import java.rmi.Naming;
 import java.rmi.Remote;
@@ -26,8 +25,8 @@ public class Downloader extends Thread implements Remote {
     private final URLQueueInterface urlQueue;
     
     private final Semaphore sem;
-    private final HashMap<String, HashSet<WebPage>> index = new HashMap<>();
-    private final HashMap<String, HashSet<String>> links = new HashMap<>();
+    //private final HashMap<String, HashSet<WebPage>> index = new HashMap<>();
+    //private final HashMap<String, HashSet<String>> links = new HashMap<>();
     
     
     public Downloader(int id, int multPort, String multAddress, String URLQueueName, Semaphore sem) throws Exception {
@@ -89,7 +88,9 @@ public class Downloader extends Thread implements Remote {
                 
                 if (url != null) {
                     System.out.println("Processando URL: " + url);
+                    
                     processarURL(url);
+                    
                     //printIndex();
                 } else {
                     sleep(1000);
@@ -203,15 +204,17 @@ public class Downloader extends Thread implements Remote {
             url = "https://".concat(url);
         }
         
+        ArrayList<String> Links = new ArrayList<>();
         try {
             Document document = Jsoup.connect(url).get();
-            
+    
             String title = extrairTitulo(document);
             String textSnippet = extrairCitacao(document);
             Set<String> words = extrairPalavras(document);
-            
+    
             WebPage webPage = new WebPage(url, title, textSnippet, words);
             
+            /*
             for (String palavra : words) {
                 palavra = palavra.toLowerCase();
                 if (!index.containsKey(palavra)) {
@@ -219,37 +222,44 @@ public class Downloader extends Thread implements Remote {
                 }
                 index.get(palavra).add(webPage);
             }
-            
-            StringBuilder message = new StringBuilder("type | words; words_count | " + words.size());
-            for (String word : words) {
-                message.append("; word | ").append(word);
-            }
-            System.out.println("[DOWNLOADER] Enviando palavras: " + message);
-            sendMessage(message.toString());
-            
-            //message = new StringBuilder("type | textSnippet; textSnippet | ").append(textSnippet);
-            //System.out.println("[DOWNLOADER] Enviando snippet: " + message);
-            //sendMessage(message.toString());
-            
-            message = new StringBuilder("type | url; url | ").append(url);
-            System.out.println("[DOWNLOADER] Enviando url: " + message);
-            sendMessage(message.toString());
+            */
             
             //printIndex();
             
             Elements links = document.select("a[href]");
             for (Element link : links) {
                 String linkUrl = link.attr("abs:href");
-                urlQueue.inserirLink(linkUrl);
-                if (!this.links.containsKey(linkUrl)) {
-                    this.links.put(linkUrl, new HashSet<>());
+                if (!Links.contains(linkUrl)) {
+                    Links.add(linkUrl);
+                    urlQueue.inserirLink(linkUrl);
                 }
-                this.links.get(linkUrl).add(url);
             }
+            
+            enviarParaBarrels(webPage, Links);
             
         } catch (Exception e) {
             System.out.println("[DOWNLOADER] Erro: " + e);
         }
+    }
+    
+    private void enviarParaBarrels(WebPage webPage, ArrayList<String> links) {
+        Set<String> listaPalavras = webPage.getWords();
+        String url = webPage.getUrl();
+        
+        String message = "type | links; links_count | " + links.size() + "; url | " + url;
+        for (String link : links)
+            message = message.concat("; link | " + link);
+        System.out.println("[DOWNLOADER] Enviando links: " + message);
+        sendMessage(message);
+        
+        message = "type | words; words_count | " + listaPalavras.size() + "; url | " + url;
+        for (String word : listaPalavras)
+            message = message.concat("; word | " + word);
+        System.out.println("[DOWNLOADER] Enviando palavras: " + message);
+        sendMessage(message);
+        
+        message = "type | textSnippet; textSnippet_count | 1; url | " + url + "; textSnippet | " + webPage.getTextSnippet();
+        sendMessage(message);
     }
     /*
     public HashSet<WebPage> getWebPages(String palavra) {
@@ -289,6 +299,8 @@ public class Downloader extends Thread implements Remote {
                 byte[] buffer = message.getBytes();
                 
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, multicastPort);
+                
+                
                 this.socket.send(packet);
             } finally {
                 this.sem.release();
@@ -320,6 +332,13 @@ class WebPage {
         this.title = title;
         this.textSnippet = textSnippet;
         this.words = words;
+    }
+    
+    public WebPage() {
+        this.url = "";
+        this.title = "";
+        this.textSnippet = "";
+        this.words = new HashSet<>();
     }
     
     public String getUrl() {

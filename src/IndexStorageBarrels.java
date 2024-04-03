@@ -11,12 +11,13 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Properties;
 
 import static java.lang.Thread.sleep;
 
-public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
+public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarrelInterface{
     private final int id;
     private final String barrelsHostName;
     private final int barrelsPort;
@@ -80,33 +81,34 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
     
             int multPort = Integer.parseInt(prop.getProperty("MULTICAST_PORT"));
             String multAddress = prop.getProperty("MULTICAST_ADDRESS");
-            int port = Integer.parseInt(prop.getProperty("PORT_BARRELS"));
-            String host = prop.getProperty("HOST_BARRELS");
+            
+            int rmiPort = Integer.parseInt(prop.getProperty("PORT_BARRELS"));
+            String rmiHhost = prop.getProperty("HOST_BARRELS");
             String rmiRegister = prop.getProperty("RMI_REGISTRY_NAME_BARRELS");
     
-            IndexStorageBarrels mainBarrel = new IndexStorageBarrels(0, host, port, rmiRegister, multPort, multAddress);
+            IndexStorageBarrels mainBarrel = new IndexStorageBarrels(0, rmiHhost, rmiPort, rmiRegister, multPort, multAddress);
             try {
-                Registry r = LocateRegistry.createRegistry(port);
-                System.setProperty("java.rmi.server.hostname", host);
+                Registry r = LocateRegistry.createRegistry(rmiPort);
+                System.setProperty("java.rmi.server.hostname", rmiHhost);
         
                 r.rebind(rmiRegister, mainBarrel);
-                System.out.println("[BARREL-INTERFACE] BARREL RMI criado no seguinte:" + host + ":" + port + "->" + rmiRegister);
+                System.out.println("[BARREL-INTERFACE] BARREL RMI criado no seguinte:" + rmiHhost + ":" + rmiPort + "->" + rmiRegister);
                 
             } catch (RemoteException e) {
                 System.out.println("[BARREL-INTERFACE] RemoteException, não foi possível criar o registry. A tentar novamente em 1 segundo...");
         
                 try {
                     Thread.sleep(1000);
-                    mainBarrel.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(host, port).lookup(rmiRegister);
-                    mainBarrel.tentarNovamente(port, host, rmiRegister);
+                    mainBarrel.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(rmiHhost, rmiPort).lookup(rmiRegister);
+                    mainBarrel.tentarNovamente(rmiPort, rmiHhost, rmiRegister);
                 } catch (InterruptedException | NotBoundException | RemoteException ei) {
                     System.out.println("[ERRO]" + ei);
                 }
             }
     
-            for (int i = 1; i < 2; i++) {
+            for (int i = 1; i < 5; i++) {
         
-                if (host == null || port == 0 || rmiRegister == null || multAddress == null || multPort == 0) {
+                if (multAddress == null || multPort == 0) {
                     System.out.println("[BARREL " + i + "] Erro ao ler as propriedades do ficheiro de configuração.");
                     System.exit(1);
                 }
@@ -116,7 +118,7 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
                 //File infofile = new File("src/main/java/com/ProjetoSD/info-" + i);
         
                 //Database files = new Database();
-                Barrel barrel_t = new Barrel(i, port, multAddress);
+                Barrel barrel_t = new Barrel(i, multPort, multAddress);
                 mainBarrel.barrelsThreads.add(barrel_t);
                 barrel_t.start();
             }

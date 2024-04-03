@@ -125,7 +125,7 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
     
             IndexStorageBarrels mainBarrel = new IndexStorageBarrels(0, host, port, rmiRegister, multPort, multAddress);
             try {
-                // create the registry
+                // cria um registro
                 Registry r = LocateRegistry.createRegistry(port);
                 System.setProperty("java.rmi.server.hostname", host);
                 
@@ -163,16 +163,16 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
     }
     
     public Barrel selectBarrelToExcute() {
-        // select a random barrel to fulfill the task
+        // escolhe um barril aleatório para executar a tarefa
         if (this.barrelsThreads.size() == 0) {
             System.out.println("[BARREL-INTERFACE] No barrels to fulfill the task");
-            // no barrels to fulfill the task
+            // nenhum barril disponível para executar a tarefa
             return null;
         }
         
         int random = (int) (Math.random() * this.barrelsThreads.size());
         
-        // check if barrel is alive if not remove from barrels_threads and select another barrel
+        // verificar se o barril está vivo, se não estiver remover da lista e selecionar outro barril
         if (!this.barrelsThreads.get(random).isAlive()) {
             System.out.println("[BARREL-INTERFACE] Barrel " + random + " is not alive");
             this.barrelsThreads.remove(random);

@@ -2,6 +2,7 @@ package src;
 
 import interfaces.RMIBarrelInterface;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -68,6 +69,7 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
         start();
     }
     
+    
     public void run() {
         try {
             while (true) {
@@ -109,6 +111,8 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
     
     }
     
+    
+    
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
         Properties prop = new Properties();
@@ -128,25 +132,37 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
                 // create the registry
                 Registry r = LocateRegistry.createRegistry(port);
                 System.setProperty("java.rmi.server.hostname", host);
-                
+        
                 r.rebind(rmiRegister, mainBarrel);
                 System.out.println("[BARREL-INTERFACE] BARREL RMI registry created on: " + host + ":" + port + "->" + rmiRegister);
-        
+                
             } catch (RemoteException e) {
                 System.out.println("[BARREL-INTERFACE] RemoteException, could not create registry. Retrying in 1 second...");
         
                 try {
                     Thread.sleep(1000);
                     mainBarrel.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(host, port).lookup(rmiRegister);
+                    mainBarrel.backUp(port, host, rmiRegister);
                 } catch (InterruptedException | NotBoundException | RemoteException ei) {
-                    System.out.println("[EXCEPTION] InterruptedException | NotBoundException | RemoteException");
-                    ei.printStackTrace();
+                    System.out.println("[EXCEPTION] InterruptedException | NotBoundException | RemoteException" + e);
                 }
             }
-            
-            LocateRegistry.createRegistry(port);
+    
             for (int i = 1; i < 5; i++) {
-            
+        
+                if (host == null || port == 0 || rmiRegister == null || multAddress == null || multPort == 0) {
+                    System.out.println("[BARREL " + i + "] Error reading properties file");
+                    System.exit(1);
+                }
+        
+                //File linkfile = new File("src/main/java/com/ProjetoSD/links-" + i);
+                //File wordfile = new File("src/main/java/com/ProjetoSD/words-" + i);
+                //File infofile = new File("src/main/java/com/ProjetoSD/info-" + i);
+        
+                //Database files = new Database();
+                Barrel barrel_t = new Barrel(i, port, multAddress);
+                mainBarrel.barrelsThreads.add(barrel_t);
+                barrel_t.start();
             }
         } catch (Exception e) {
             System.out.println("[INDEX-STORAGE-BARRELS] Erro: " + e);
@@ -165,9 +181,14 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
     public Barrel selectBarrelToExcute() {
         // select a random barrel to fulfill the task
         if (this.barrelsThreads.size() == 0) {
-            System.out.println("[BARREL-INTERFACE] No barrels to fulfill the task");
-            // no barrels to fulfill the task
-            return null;
+            System.out.println("[BARREL-INTERFACE] No barrels available. Waiting for a barrel to become available...");
+            // wait for a short period and try again
+            try {
+                Thread.sleep(1000); // wait for 1 second
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return selectBarrelToExcute(); // recursive call to try again
         }
         
         int random = (int) (Math.random() * this.barrelsThreads.size());
@@ -182,11 +203,12 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
         return this.barrelsThreads.get(random);
     }
     
+    
     private void backUp(int rmiPort, String rmiHost, String rmiRegister) throws RemoteException {
         while (true) {
             try {
                 Barrel barrel_t = selectBarrelToExcute();
-                
+            
                 if (this.barrel.alive()) {
                     System.out.println("[BARREL] Connection to RMI server reestablished");
                     break;

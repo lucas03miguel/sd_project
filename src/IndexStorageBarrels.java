@@ -2,7 +2,6 @@ package src;
 
 import interfaces.RMIBarrelInterface;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -68,7 +67,6 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
         */
         start();
     }
-    
     
     public void run() {
         try {
@@ -179,7 +177,7 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
     }
     
     public Barrel selectBarrelToExcute() {
-        // select a random barrel to fulfill the task
+        // escolhe um barril aleatório para executar a tarefa
         if (this.barrelsThreads.size() == 0) {
             System.out.println("[BARREL-INTERFACE] No barrels available. Waiting for a barrel to become available...");
             // wait for a short period and try again
@@ -193,7 +191,7 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
         
         int random = (int) (Math.random() * this.barrelsThreads.size());
         
-        // check if barrel is alive if not remove from barrels_threads and select another barrel
+        // verificar se o barril está vivo, se não estiver remover da lista e selecionar outro barril
         if (!this.barrelsThreads.get(random).isAlive()) {
             System.out.println("[BARREL-INTERFACE] Barrel " + random + " is not alive");
             this.barrelsThreads.remove(random);
@@ -202,7 +200,6 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
         
         return this.barrelsThreads.get(random);
     }
-    
     
     private void backUp(int rmiPort, String rmiHost, String rmiRegister) throws RemoteException {
         while (true) {

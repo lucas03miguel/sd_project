@@ -113,7 +113,7 @@ public class Downloader extends Thread implements Remote {
             String urlQueueName = prop.getProperty("URL_QUEUE_REGISTRY_NAME");
     
             Semaphore sem = new Semaphore(1);
-            int totalDownloaders = 50; // Número total de downloaders
+            int totalDownloaders = 5; // Número total de downloaders
             for (int i = 1; i <= totalDownloaders; i++) {
                 d = new Downloader(i, port, address, urlQueueName, sem);
                 d.start();

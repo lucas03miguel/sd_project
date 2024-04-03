@@ -118,7 +118,7 @@ public class IndexStorageBarrels extends Thread implements RMIBarrelInterface{
                 //Database files = new Database();
                 Barrel barrel_t = new Barrel(i, port, multAddress);
                 mainBarrel.barrelsThreads.add(barrel_t);
-                //barrel_t.start();
+                barrel_t.start();
             }
             
         } catch (Exception e) {

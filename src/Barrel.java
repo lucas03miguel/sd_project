@@ -22,7 +22,7 @@ public class Barrel extends Thread implements Serializable {
         this.socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkInterface.getByIndex(0));
         
         System.out.println("BARREL " + id + " INICIALIZADOO COM SUCESSO");
-        start();
+        //start();
     }
     
     public void run() {

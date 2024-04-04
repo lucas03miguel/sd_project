@@ -27,7 +27,7 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
         
         try {
             LocateRegistry.createRegistry(urlQueuePort);
-            Naming.rebind("URLQUEUE", this);
+            Naming.rebind(urlQueueName, this);
             
         } catch (Exception e) {
             throw new RuntimeException(e);

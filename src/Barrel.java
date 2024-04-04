@@ -1,13 +1,12 @@
 package src;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.concurrent.Semaphore;
 
 public class Barrel extends Thread implements Serializable {
     private final int id;
@@ -15,15 +14,16 @@ public class Barrel extends Thread implements Serializable {
     private final String multicastAddress;
     private MulticastSocket socket;
     private InetAddress group;
-    private final HashMap<String, HashSet<String>> index;
-    private final HashMap<String, HashSet<String>> links;
-    private final HashMap<String, String> webInfo;
-    private final String linksFilename;
-    private final String wordsFilename;
-    private final String textSnippetFilename;
-    private final File linksFile;
-    private final File wordsFile;
-    private final File textSnippetFile;
+    private HashMap<String, HashSet<String>> index; //chave: palavra, valor: conjunto de urls
+    private HashMap<String, HashSet<String>> links; //chave: url, valor: conjunto de urls
+    private HashMap<String, String> webInfo; //chave: url, valor: snippet de texto
+    private final String linksFilename; //nome do arquivo que guarda os links
+    private final String wordsFilename; //nome do arquivo que guarda as palavras
+    private final String textSnippetFilename; //nome do arquivo que guarda os snippets de texto
+    private final File linksFile; //arquivo que guarda os links
+    private final File wordsFile; //arquivo que guarda as palavras
+    private final File textSnippetFile; //arquivo que guarda os snippets de texto
+    private Semaphore sem;
     
     public Barrel(int id, int multicastPort, String multicastAddress) throws IOException {
         super();
@@ -33,25 +33,30 @@ public class Barrel extends Thread implements Serializable {
         this.multicastAddress = multicastAddress;
         this.socket = new MulticastSocket(multicastPort);
         this.group = InetAddress.getByName(multicastAddress);
-        this.socket.joinGroup(group);
-        this.links = new HashMap<>();
-        this.index = new HashMap<>();
-        this.webInfo = new HashMap<>();
+        this.socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkInterface.getByIndex(0));
+        //this.links = new HashMap<>();
+        //this.index = new HashMap<>();
+        //this.webInfo = new HashMap<>();
         
-        this.linksFilename = "../files/links-" + id + ".txt";
-        this.wordsFilename = "../files/words-" + id + ".txt";
-        this.textSnippetFilename = "../files/text-" + id + ".txt";
+        this.linksFilename = "files/links-" + id + ".txt";
+        this.wordsFilename = "files/words-" + id + ".txt";
+        this.textSnippetFilename = "files/text-" + id + ".txt";
         
         this.linksFile = new File(linksFilename);
         this.wordsFile = new File(wordsFilename);
         this.textSnippetFile = new File(textSnippetFilename);
-        
+    
+        this.sem = new Semaphore(1);
         System.out.println("BARREL " + id + " INICIALIZADO COM SUCESSO");
     }
     
     public void run() {
         try {
             while (true) {
+                this.links = new HashMap<>();
+                this.index = new HashMap<>();
+                this.webInfo = new HashMap<>();
+                
                 byte[] buffer = new byte[32 * 1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 System.out.println("Barrel " + id + " esperando mensagem...");
@@ -69,7 +74,6 @@ public class Barrel extends Thread implements Serializable {
                 System.out.println("type: " + type + " count: " + count);
                 System.out.println(Arrays.toString(list) + "\n");
                 if (type.equals("links")) {
-                    
                     // TODO: implementar lógica para lidar com URLs
                     System.out.println(count);
                     for (int i = 3; i < count; i++) {
@@ -100,13 +104,62 @@ public class Barrel extends Thread implements Serializable {
                     if (!this.webInfo.containsKey(url))
                         this.webInfo.put(url, chave);
                 }
+                
+                updateFiles(this.links, this.index, this.webInfo);
             }
         } catch (Exception e) {
             System.out.println("Erro no Barrel " + id + ": " + e);
         }
     }
-
     
+    private void updateFiles(HashMap<String, HashSet<String>> index, HashMap<String, HashSet<String>> links, HashMap<String, String> webInfo) {
+        try {
+            this.sem.acquire();
+            if (!wordsFile.exists()) {
+                boolean s = wordsFile.createNewFile();
+            }
+            if (!linksFile.exists()) {
+                boolean __ = linksFile.createNewFile();
+            }
+            if (!textSnippetFile.exists()) {
+                boolean __ = textSnippetFile.createNewFile();
+            }
+            
+            //FileOutputStream fos = new FileOutputStream(wordsFile);
+            FileWriter fw = new FileWriter(wordsFile, true);
+            for (String word : index.keySet()) {
+                fw.write(word);
+                for (String url : index.get(word)) {
+                    fw.write(" | " + url);
+                }
+                //fw.write();
+            }
+            fw.write("\n");
+            fw.close();
+            
+            
+            fw = new FileWriter(linksFile, true);
+            for (String link : links.keySet()) {
+                fw.write(link);
+                for (String url : links.get(link)) {
+                    fw.write(" | " + url);
+                }
+            }
+            fw.write("\n");
+            fw.close();
+            
+            fw = new FileWriter(textSnippetFile, true);
+            for (String url : webInfo.keySet()) {
+                fw.write(url + " | " + webInfo.get(url) + "\n");
+            }
+            fw.close();
+            
+            this.sem.release();
+        } catch (IOException | InterruptedException e) {
+            System.out.println("[EXCEPTION] While updating links: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
     
     
     public void guardarURLs(String[] list) {

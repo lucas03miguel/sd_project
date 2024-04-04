@@ -11,6 +11,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.Scanner;
 
 public class RMIClient extends UnicastRemoteObject {
     private final int keepAliveTime = 5000;

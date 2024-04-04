@@ -38,9 +38,9 @@ public class Barrel extends Thread implements Serializable {
         //this.index = new HashMap<>();
         //this.webInfo = new HashMap<>();
         
-        this.linksFilename = "files/links-" + id + ".txt";
-        this.wordsFilename = "files/words-" + id + ".txt";
-        this.textSnippetFilename = "files/text-" + id + ".txt";
+        this.linksFilename = "database/links-" + id + ".txt";
+        this.wordsFilename = "database/words-" + id + ".txt";
+        this.textSnippetFilename = "database/text-" + id + ".txt";
         
         this.linksFile = new File(linksFilename);
         this.wordsFile = new File(wordsFilename);
@@ -115,15 +115,6 @@ public class Barrel extends Thread implements Serializable {
     private void updateFiles(HashMap<String, HashSet<String>> index, HashMap<String, HashSet<String>> links, HashMap<String, String> webInfo) {
         try {
             this.sem.acquire();
-            if (!wordsFile.exists()) {
-                boolean s = wordsFile.createNewFile();
-            }
-            if (!linksFile.exists()) {
-                boolean __ = linksFile.createNewFile();
-            }
-            if (!textSnippetFile.exists()) {
-                boolean __ = textSnippetFile.createNewFile();
-            }
             
             //FileOutputStream fos = new FileOutputStream(wordsFile);
             FileWriter fw = new FileWriter(wordsFile, true);

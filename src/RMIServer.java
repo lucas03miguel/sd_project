@@ -148,9 +148,9 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         return new ArrayList<>(Arrays.asList("true", pass, message));
         */
         int validLogins = 0;
-        String filePath = "./files/users.txt";
+        String filePath = "./database/users.txt";
         
-        Path dirPath = Path.of("./files");
+        Path dirPath = Path.of("./database");
         if (!Files.exists(dirPath)) {
             try {
                 Files.createDirectories(dirPath);
@@ -194,7 +194,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
 
     
     public String checkRegisto(String username, String password) throws RemoteException {
-    String filePath = "./files/users.txt";
+    String filePath = "./database/users.txt";
 
     try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, true))) {
         bw.write(username + " " + password + "\n");

@@ -45,6 +45,17 @@ public class Barrel extends Thread implements Serializable {
         this.linksFile = new File(linksFilename);
         this.wordsFile = new File(wordsFilename);
         this.textSnippetFile = new File(textSnippetFilename);
+
+        // Se os arquivos não existirem, cria-os
+        if (!linksFile.exists()) {
+            linksFile.createNewFile();
+        }
+        if (!wordsFile.exists()) {
+            wordsFile.createNewFile();
+        }
+        if (!textSnippetFile.exists()) {
+            textSnippetFile.createNewFile();
+        }
     
         this.sem = new Semaphore(1);
         System.out.println("BARREL " + id + " INICIALIZADO COM SUCESSO");

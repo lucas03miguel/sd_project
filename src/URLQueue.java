@@ -71,20 +71,21 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
         return urlString;
     }
     
-    public static boolean isValidURL(String urlString) {
+    public static boolean isValidURL(String url) {
         try {
-            URI uri = new URI(urlString);
-            if (uri.getScheme() == null || uri.getHost() == null)
-                return false;
-            
-            URL __ = uri.toURL();
+            new URL(url).toURI();
             return true;
-        } catch (URISyntaxException | MalformedURLException e) {
+        } catch (Exception e) {
             return false;
         }
     }
     
     public String inserirLink(String link) throws RemoteException {
+        String[] separacao = link.split("\\.");
+        if (separacao.length < 2) return "URL invalido";
+        if (separacao[0].equals("www")) return "URL invalido";
+        if (separacao[0].contains("www") && separacao.length < 3) return "URL invalido";
+        
         try {
             link = formatURL(link);
             if (!isValidURL(link)) return "URL invalido";

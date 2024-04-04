@@ -38,9 +38,9 @@ public class Barrel extends Thread implements Serializable {
         //this.index = new HashMap<>();
         //this.webInfo = new HashMap<>();
         
-        this.linksFilename = "database/links-" + id + ".txt";
-        this.wordsFilename = "database/words-" + id + ".txt";
-        this.textSnippetFilename = "database/text-" + id + ".txt";
+        this.linksFilename = "./database/links-" + id + ".txt";
+        this.wordsFilename = "./database/palavras-" + id + ".txt";
+        this.textSnippetFilename = "./database/texto-" + id + ".txt";
         
         this.linksFile = new File(linksFilename);
         this.wordsFile = new File(wordsFilename);
@@ -51,8 +51,8 @@ public class Barrel extends Thread implements Serializable {
     }
     
     public void run() {
-        try {
-            while (true) {
+        while (true) {
+            try {
                 this.links = new HashMap<>();
                 this.index = new HashMap<>();
                 this.webInfo = new HashMap<>();
@@ -63,7 +63,7 @@ public class Barrel extends Thread implements Serializable {
                 
                 this.socket.receive(packet);
                 String message = new String(packet.getData(), 0, packet.getLength());
-                System.out.println("Barrel " + id + " recebeu mensagem: " + message);
+                //System.out.println("Barrel " + id + " recebeu mensagem: " + message);
                 
                 String[] list = message.split("; ");
                 String type = list[0].split(" \\| ")[1];
@@ -105,38 +105,78 @@ public class Barrel extends Thread implements Serializable {
                         this.webInfo.put(url, chave);
                 }
                 
-                updateFiles(this.links, this.index, this.webInfo);
+                updateFiles(url, this.index, this.links, this.webInfo);
+            } catch (Exception e) {
+                System.out.println("[Erro no Barrel " + id + "] " + e);
             }
-        } catch (Exception e) {
-            System.out.println("Erro no Barrel " + id + ": " + e);
         }
     }
     
-    private void updateFiles(HashMap<String, HashSet<String>> index, HashMap<String, HashSet<String>> links, HashMap<String, String> webInfo) {
+    private void updateFiles(String url_original, HashMap<String, HashSet<String>> index, HashMap<String, HashSet<String>> links, HashMap<String, String> webInfo) {
         try {
-            this.sem.acquire();
-            
+            //this.sem.acquire();
             //FileOutputStream fos = new FileOutputStream(wordsFile);
+            RandomAccessFile file = new RandomAccessFile(wordsFile, "rw");
+            for (String word : index.keySet()) {
+                String line;
+                long currentPosition = file.getFilePointer();
+                boolean foundLine = false;
+        
+                while ((line = file.readLine()) != null) {
+                    System.out.println("line: " + line);
+                    System.out.println("word: " + word);
+                    if (line.startsWith(word)) {
+                        System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+                        foundLine = true;
+                        break;
+                    }
+                    currentPosition = file.getFilePointer(); // Atualiza a posição atual
+                }
+        
+                if (foundLine) {
+                    // Posiciona o ponteiro no final da linha correspondente
+                    file.seek(currentPosition);
+                    for (String url : index.get(word)) {
+                        file.writeBytes(" | " + url);
+                    }
+                    file.writeBytes(System.lineSeparator()); // Adiciona uma nova linha após a linha modificada
+                } else {
+                    // Se não encontrou a linha correspondente, adiciona uma nova linha no final do arquivo
+                    file.seek(file.length());
+                    file.writeBytes(word);
+                    for (String url : index.get(word)) {
+                        file.writeBytes(" | " + url);
+                    }
+                    file.writeBytes(System.lineSeparator());
+                }
+            }
+            
+            
+            /*
             FileWriter fw = new FileWriter(wordsFile, true);
             for (String word : index.keySet()) {
                 fw.write(word);
+                //System.out.println("word: " + word);
                 for (String url : index.get(word)) {
                     fw.write(" | " + url);
                 }
-                //fw.write();
+                fw.write("\n");
             }
-            fw.write("\n");
-            fw.close();
+            //fw.write("\n");
             
-            
-            fw = new FileWriter(linksFile, true);
+             */
+            file.close();
+    
+    
+            FileWriter fw = new FileWriter(linksFile, true);
             for (String link : links.keySet()) {
                 fw.write(link);
                 for (String url : links.get(link)) {
                     fw.write(" | " + url);
                 }
+                fw.write("\n");
             }
-            fw.write("\n");
+            //fw.write("\n");
             fw.close();
             
             fw = new FileWriter(textSnippetFile, true);
@@ -145,10 +185,9 @@ public class Barrel extends Thread implements Serializable {
             }
             fw.close();
             
-            this.sem.release();
-        } catch (IOException | InterruptedException e) {
-            System.out.println("[EXCEPTION] While updating links: " + e.getMessage());
-            e.printStackTrace();
+            //this.sem.release();
+        } catch (Exception e) {
+            System.out.println("[EXCEPTION] While updating links: " + e);
         }
     }
     

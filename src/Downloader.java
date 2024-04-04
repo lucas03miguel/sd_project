@@ -159,7 +159,7 @@ public class Downloader extends Thread implements Remote {
     
     private String extrairCitacao(Document doc) {
         Elements paragraphs = doc.select("p");
-        return !paragraphs.isEmpty() ? paragraphs.first().text() : "";
+        return !paragraphs.isEmpty() ? paragraphs.next().text() : "";
     }
     
     private Set<String> extrairPalavras(Document doc) {
@@ -168,10 +168,10 @@ public class Downloader extends Thread implements Remote {
         String[] wordArray = text.split("\\s+");
         for (String word : wordArray) {
             String normalizedText = Normalizer.normalize(word, Normalizer.Form.NFD);
-            normalizedText = normalizedText.replaceAll("\\p{M}", "");
-            word = normalizedText.replaceAll("[^a-zA-Z0-9 ]", "");
+            normalizedText = normalizedText.replaceAll("-\\p{M}", "");
+            word = normalizedText.replaceAll("[^a-zA-Z0-9 -]", "");
             if (word.length() > 2) {
-                words.add(word);
+                words.add(word.toLowerCase());
             }
         }
         return words;
@@ -210,6 +210,7 @@ public class Downloader extends Thread implements Remote {
     
             String title = extrairTitulo(document);
             String textSnippet = extrairCitacao(document);
+            System.out.println(textSnippet);
             Set<String> words = extrairPalavras(document);
     
             WebPage webPage = new WebPage(url, title, textSnippet, words);

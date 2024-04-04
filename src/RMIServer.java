@@ -200,7 +200,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         bw.write(username + " " + password + "\n");
         System.out.println("O user adicionado foi: " + username + " " + password);
         bw.flush();
-        System.out.println("User adicionado com sucesso. hadshasdhahsdhasdhasdhadhsahdsh");
+        System.out.println("User adicionado com sucesso.");
     } catch (Exception e) {
         System.err.println("Erro ao escrever no ficheiro de users: " + e);
         return "Erro no lado do servidor";

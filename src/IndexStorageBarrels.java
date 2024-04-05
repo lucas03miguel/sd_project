@@ -9,6 +9,8 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Properties;
 
 public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarrelInterface{
@@ -122,12 +124,14 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         }
     }
     
-    public String[] pesquisarLinks(String s) throws RemoteException {
+    public HashMap<String, HashSet<String>> pesquisarLinks(String s) throws RemoteException {
         Barrel barrel = this.selecionarBarrel();
         if (barrel == null) {
             // "status:failure | message:No barrels available"
             // return an Hashset with status and message
-            return new String[]{"Erro"};
+            HashMap<String, HashSet<String>> result = new HashMap<>();
+            result.put("Erro", new HashSet<>());
+            return result;
         }
     
         return barrel.obterLinks(s);

@@ -102,6 +102,7 @@ public class Barrel extends Thread implements Serializable {
                     String chave = list[3].split(" \\| ")[1];
                     if (!this.webInfo.containsKey(url))
                         this.webInfo.put(url, chave);
+                    
                 }
                 
                 updateFiles(url, this.index, this.links, this.webInfo);
@@ -154,17 +155,10 @@ public class Barrel extends Thread implements Serializable {
     
     }
     
-    public String[] obterLinks(String palavra) {
+    public HashMap<String, HashSet<String>> obterLinks(String palavra) {
         System.out.println("Pesquisando links com a palavra: " + palavra);
+        HashMap<String, HashSet<String>> urls = new HashMap<>();
         
-        HashSet<String> urls = new HashSet<>();
-        /*
-        if (urls == null) {
-            System.out.println("Nenhum link encontrado com a palavra: " + palavra);
-            return new String[]{"Nenhum link encontrado"};
-        }
-        
-         */
         try {
             this.sem.acquire();
             BufferedReader fr = new BufferedReader(new FileReader(wordsFile));
@@ -173,17 +167,27 @@ public class Barrel extends Thread implements Serializable {
             while ((line = fr.readLine()) != null) {
                 String[] parts = line.split(" \\| ");
                 if (parts[0].equals(palavra)) {
-                    urls.addAll(Arrays.asList(parts).subList(1, parts.length));
+                    for (int i = 1; i < parts.length; i++) {
+                        if (!urls.containsKey(parts[i]))
+                            urls.put(parts[i], new HashSet<>());
+                        urls.get(parts[i]).add(parts[0]);
+                    }
+                    //urls.addAll(Arrays.asList(parts).subList(1, parts.length));
                 }
             }
             fr.close();
             this.sem.release();
         } catch (Exception e) {
             System.out.println("[EXCEPTION] " + e);
-            return new String[]{"Erro ao pesquisar links"};
+            HashMap<String, HashSet<String>> error = new HashMap<>();
+            error.put("Erro ao pesquisar links", new HashSet<>());
+            return error;
         }
-        if (urls.isEmpty())
-            return new String[]{"Nenhum link encontrado"};
-        return urls.toArray(new String[0]);
+        if (urls.isEmpty()) {
+            HashMap<String, HashSet<String>> error = new HashMap<>();
+            error.put("Nenhum link encontrado", new HashSet<>());
+            return error;
+        }
+        return urls;
     }
 }

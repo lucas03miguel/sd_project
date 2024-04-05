@@ -11,6 +11,9 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.spi.AbstractResourceBundleProvider;
+
+import static java.lang.Thread.sleep;
 
 public class RMIClient extends UnicastRemoteObject {
     private final int keepAliveTime = 5000;
@@ -20,23 +23,25 @@ public class RMIClient extends UnicastRemoteObject {
     private Client client;
     private RMIServerInterface serverInterface;
     
-    public RMIClient(String rmiHost, int rmiPort, String rmiRegistryName, RMIServerInterface serverInterface) throws RemoteException {
+    public RMIClient(String rmiHost, int rmiPort, String rmiRegistryName) throws RemoteException, InterruptedException {
         super();
         this.rmiHost = rmiHost;
         this.rmiPort = rmiPort;
         this.rmiRegistryName = rmiRegistryName;
         
         //this.client = client;
-        this.serverInterface = serverInterface;
-        
-        try {
-            System.out.println("[CLIENT] Configuração: " + rmiHost + ":" + rmiPort + "->" + rmiRegistryName);
-            System.out.println("[CLIENT] Conectado!!!");
-            
-            run();
-        }catch (Exception e){
-            System.out.println("[CLIENT] Erro ao conectar ao servidor: " + e);
+        while (true) {
+            try {
+                System.out.println("[CLIENT] Configuração: " + rmiHost + ":" + rmiPort + "->" + rmiRegistryName);
+                this.serverInterface = (RMIServerInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
+                System.out.println("[CLIENT] Conectado!!!");
+                break;
+            } catch (Exception e) {
+                System.out.println("[CLIENT] Erro ao conectar ao servidor: " + e);
+                sleep(1000);
+            }
         }
+        run();
         //run();
         
     }
@@ -55,8 +60,7 @@ public class RMIClient extends UnicastRemoteObject {
             
             //Client client = new Client("Antonio", false);
             //RMIServerInterface svInterface = (RMIServerInterface) Naming.lookup(rmiRegistryName);
-            RMIServerInterface svInterface = (RMIServerInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
-            new RMIClient(rmiHost, rmiPort, rmiRegistryName, svInterface);
+            new RMIClient(rmiHost, rmiPort, rmiRegistryName);
         } catch (Exception e) {
             System.out.println("[CLIENT] Erro ao conectar ao servidor: " + e);
         }
@@ -151,7 +155,7 @@ public class RMIClient extends UnicastRemoteObject {
     
                                 res = serverInterface.indexar(url);
                                 if (res.equals("URL valido")) {
-                                    System.out.println("URL indexado com sucesso!");
+                                    System.out.println("URL adicionado com sucesso!");
                                     break;
                                 } else {
                                     System.out.println(res);

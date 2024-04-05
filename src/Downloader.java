@@ -18,9 +18,9 @@ import java.util.concurrent.Semaphore;
 
 public class Downloader extends Thread implements Remote {
     //private final String multicastAddress;
-    private int multicastPort;
+    private final int multicastPort;
     private final InetAddress group;
-    private MulticastSocket socket;
+    private final MulticastSocket socket;
     private final int idDownloader;
     private final URLQueueInterface urlQueue;
     
@@ -96,7 +96,7 @@ public class Downloader extends Thread implements Remote {
                     sleep(1000);
                 }
             } catch (Exception e) {
-                System.out.println("[DOWNLOADER] Erro: " + e);
+                System.out.println("[DOWNLOADER] Erro 1: " + e);
             }
         }
     }
@@ -122,7 +122,7 @@ public class Downloader extends Thread implements Remote {
             //new Downloader(1, port, address, 5);
             
         } catch (Exception e) {
-            System.out.println("[DOWNLOADER] Erro: " + e);
+            System.out.println("[DOWNLOADER] Erro 3: " + e);
         }
         assert d != null;
         d.cleanup();
@@ -231,6 +231,7 @@ public class Downloader extends Thread implements Remote {
             for (Element link : links) {
                 String linkUrl = link.attr("abs:href");
                 if (!Links.contains(linkUrl)) {
+                    linkUrl = linkUrl.replaceAll("[\n;|]+", "");
                     Links.add(linkUrl);
                     urlQueue.inserirLink(linkUrl);
                 }
@@ -239,7 +240,7 @@ public class Downloader extends Thread implements Remote {
             enviarParaBarrels(webPage, Links);
             
         } catch (Exception e) {
-            System.out.println("[DOWNLOADER] Erro: " + e);
+            System.out.println("[DOWNLOADER] Erro 2: " + e);
         }
     }
     
@@ -329,10 +330,15 @@ class WebPage {
     private Set<String> words;
     
     public WebPage(String url, String title, String textSnippet, Set<String> words) {
-        this.url = url;
-        this.title = title;
-        this.textSnippet = textSnippet;
-        this.words = words;
+        this.url = url.replaceAll("[\n;|]+", "");
+        this.title = title.replaceAll("[\n;|]+", "");
+        this.textSnippet = textSnippet.replaceAll("[\n;|]+", "");
+        Set<String> wordsCopy = new HashSet<>();
+        for (String word : words) {
+            word = word.replaceAll("[\n;|]+", "");
+            wordsCopy.add(word);
+        }
+        this.words = wordsCopy;
     }
     
     public WebPage() {

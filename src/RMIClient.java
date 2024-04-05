@@ -11,7 +11,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
 import java.util.Properties;
-import java.util.Scanner;
 
 public class RMIClient extends UnicastRemoteObject {
     private final int keepAliveTime = 5000;
@@ -140,7 +139,8 @@ public class RMIClient extends UnicastRemoteObject {
                                 System.out.print("Pesquisa inválida (3+ carateres): ");
                                 searchQuery = br.readLine();
                             }
-                            serverInterface.pesquisar(searchQuery);
+                            String[] resp = serverInterface.pesquisar(searchQuery);
+                            System.out.println(Arrays.toString(resp));
                         }
                         case "2" -> {
                             System.out.println("<----Indexar novo URL---->");
@@ -190,6 +190,7 @@ public class RMIClient extends UnicastRemoteObject {
         } catch (Exception e) {
             System.out.println("[EXCEPTION] Exceção na main: " + e);
             System.out.println("adeus");
+            e.printStackTrace();
         }
     }
     

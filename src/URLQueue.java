@@ -3,20 +3,18 @@ package src;
 import interfaces.URLQueueInterface;
 
 import java.io.FileInputStream;
-import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, Serializable {
+public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
     private final BlockingQueue<String> urlQueue;
     private URLQueueInterface queue;
     
@@ -83,8 +81,9 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface, 
     public String inserirLink(String link) throws RemoteException {
         String[] separacao = link.split("\\.");
         if (separacao.length < 2) return "URL invalido";
-        if (separacao[0].equals("www")) return "URL invalido";
+        if (separacao[0].equals("www") && separacao.length == 2) return "URL invalido";
         if (separacao[0].contains("www") && separacao.length < 3) return "URL invalido";
+        if ((separacao[0].equals("https://") || separacao[0].equals("http://")) && separacao.length == 2) return "URL invalido";
         
         try {
             link = formatURL(link);

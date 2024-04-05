@@ -1,18 +1,16 @@
 package interfaces;
 
 import src.Barrel;
-import src.IndexStorageBarrels;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 
 public interface RMIBarrelInterface extends Remote{
     //void guardarURLs(String[] list);
     Barrel selecionarBarrel() throws RemoteException;
     boolean alive() throws RemoteException;
+    
+    String[] pesquisarLinks(String s) throws RemoteException;
     /*
     
     ArrayList<String> checkUserRegistration(String username, String password, String firstName, String lastName) throws RemoteException;

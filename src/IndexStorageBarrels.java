@@ -3,10 +3,6 @@ package src;
 import interfaces.RMIBarrelInterface;
 
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.net.*;
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -14,8 +10,6 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Properties;
-
-import static java.lang.Thread.sleep;
 
 public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarrelInterface{
     private final int id;
@@ -43,8 +37,26 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         //this.socket = new MulticastSocket(multPort);
         //this.group = InetAddress.getByName(multAddress);
         //this.socket.joinGroup(new InetSocketAddress(group, multPort), NetworkInterface.getByIndex(0));
-
+    
+        try {
+            Registry r = LocateRegistry.createRegistry(port);
+            System.setProperty("java.rmi.server.hostname", host);
+            r.rebind(rmiRegister, this);
         
+            //r.rebind(rmiRegister, mainBarrel);
+            System.out.println("[BARREL-INTERFACE] BARREL RMI criado em: " + host + ":" + port + "->" + rmiRegister);
+        
+        } catch (RemoteException e) {
+            System.out.println("[BARREL-INTERFACE] RemoteException, não foi possível criar o registry. A tentar novamente em 1 segundo...");
+        
+            try {
+                Thread.sleep(1000);
+                this.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(host, port).lookup(rmiRegister);
+                this.tentarNovamente(host, port, rmiRegister);
+            } catch (InterruptedException | NotBoundException | RemoteException ei) {
+                System.out.println("[INDEX-STORAGE-BARRELS]" + ei);
+            }
+        }
         
         /*
         String message = "OIIIIIIIIIIIIIII";
@@ -83,28 +95,10 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
             String multAddress = prop.getProperty("MULTICAST_ADDRESS");
             
             int rmiPort = Integer.parseInt(prop.getProperty("PORT_BARRELS"));
-            String rmiHhost = prop.getProperty("HOST_BARRELS");
+            String rmiHost = prop.getProperty("HOST_BARRELS");
             String rmiRegister = prop.getProperty("RMI_REGISTRY_NAME_BARRELS");
     
-            IndexStorageBarrels mainBarrel = new IndexStorageBarrels(0, rmiHhost, rmiPort, rmiRegister, multPort, multAddress);
-            try {
-                Registry r = LocateRegistry.createRegistry(rmiPort);
-                System.setProperty("java.rmi.server.hostname", rmiHhost);
-        
-                r.rebind(rmiRegister, mainBarrel);
-                System.out.println("[BARREL-INTERFACE] BARREL RMI criado no seguinte:" + rmiHhost + ":" + rmiPort + "->" + rmiRegister);
-                
-            } catch (RemoteException e) {
-                System.out.println("[BARREL-INTERFACE] RemoteException, não foi possível criar o registry. A tentar novamente em 1 segundo...");
-        
-                try {
-                    Thread.sleep(1000);
-                    mainBarrel.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(rmiHhost, rmiPort).lookup(rmiRegister);
-                    mainBarrel.tentarNovamente(rmiPort, rmiHhost, rmiRegister);
-                } catch (InterruptedException | NotBoundException | RemoteException ei) {
-                    System.out.println("[ERRO]" + ei);
-                }
-            }
+            IndexStorageBarrels mainBarrel = new IndexStorageBarrels(0, rmiHost, rmiPort, rmiRegister, multPort, multAddress);
     
             for (int i = 1; i < 5; i++) {
         
@@ -127,6 +121,19 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
             System.out.println("[INDEX-STORAGE-BARRELS] Erro: " + e);
         }
     }
+    
+    public String[] pesquisarLinks(String s) throws RemoteException {
+        Barrel barrel = this.selecionarBarrel();
+        if (barrel == null) {
+            // "status:failure | message:No barrels available"
+            // return an Hashset with status and message
+            return new String[]{"Erro"};
+        }
+    
+        return barrel.obterLinks(s);
+    }
+    
+    
     
     public boolean alive() throws RemoteException {
         Barrel barrel = this.selecionarBarrel();
@@ -157,7 +164,7 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         return this.barrelsThreads.get(random);
     }
     
-    private void tentarNovamente(int rmiPort, String rmiHost, String rmiRegister) throws RemoteException {
+    private void tentarNovamente(String rmiHost, int rmiPort, String rmiRegister) throws RemoteException {
         while (true) {
             try {
                 if (this.barrel != null && this.barrel.alive()) {

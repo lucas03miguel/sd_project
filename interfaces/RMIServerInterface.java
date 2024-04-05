@@ -8,7 +8,9 @@ public interface RMIServerInterface extends Remote {
     String checkRegisto(String username, String password) throws RemoteException;
     String indexar(String url) throws RemoteException;
     
-    void pesquisar(String searchQuery) throws RemoteException;
+    String[] pesquisar(String searchQuery) throws RemoteException;
+    
+    boolean alive() throws RemoteException;
     
     /*
     boolean alive() throws RemoteException;

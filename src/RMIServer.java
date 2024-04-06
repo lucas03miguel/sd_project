@@ -14,13 +14,22 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
 
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
     private RMIServerInterface hPrincipal;
-    HashMap<String, Client> clientes;
+    private HashMap<String, Integer> searchCounts = new HashMap<>();
+    private HashMap<String, Client> clientes;
     private URLQueueInterface urlQueue;
     private RMIBarrelInterface barrel;
     private int barrelRMIPort;
@@ -170,6 +179,8 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
             resp = barrel.pesquisarLinks(palavra);
             System.out.println(resp);
         }
+
+        searchCounts.put(s, searchCounts.getOrDefault(s, 0) + 1);
         
         return resp;
         //System.out.println("> " + s);
@@ -179,6 +190,19 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     @Override
     public List<String> getBarrelsList() throws RemoteException {
         return barrel.getBarrelsList();
+    }
+
+    @Override
+    public List<String> getTopSearches() throws RemoteException {
+        // Ordena as pesquisas por contagem em ordem decrescente
+        List<Map.Entry<String, Integer>> sortedSearches = new ArrayList<>(searchCounts.entrySet());
+        sortedSearches.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
+        // Retorna as top 10 pesquisas
+        return sortedSearches.stream()
+                .limit(10)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
     /*
     public void print_on_all_clients(String s) {

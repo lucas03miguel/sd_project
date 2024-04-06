@@ -116,35 +116,66 @@ public class Barrel extends Thread implements Serializable {
     
     private void updateFiles(String url_original, HashMap<String, HashSet<String>> index, HashMap<String, HashSet<String>> links, ArrayList<String> webInfo) {
         try {
+            //TODO: esta shit é uma shit e nao esta como quero fds
             this.sem.acquire();
+            if (!linksFile.exists()) {
+                linksFile.createNewFile();
+            }
+            if (!wordsFile.exists()) {
+                wordsFile.createNewFile();
+            }
+            if (!textSnippetFile.exists()) {
+                textSnippetFile.createNewFile();
+            }
             
-            FileWriter fw = new FileWriter(wordsFile, true);
+            // Ler o conteúdo atual do arquivo de palavras
+            HashMap<String, HashSet<String>> currentIndex = new HashMap<>();
+            BufferedReader reader = new BufferedReader(new FileReader(wordsFile));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(" \\| ");
+                String word = parts[0];
+                HashSet<String> urls = new HashSet<>(Arrays.asList(Arrays.copyOfRange(parts, 1, parts.length)));
+                currentIndex.put(word, urls);
+            }
+            reader.close();
+            
+            // Atualizar o índice atual com as novas palavras e URLs
             for (String word : index.keySet()) {
-                fw.write(word);
-                //System.out.println("word: " + word);
-                for (String url : index.get(word)) {
-                    fw.write(" | " + url);
+                if (!currentIndex.containsKey(word)) {
+                    currentIndex.put(word, new HashSet<>());
                 }
-                fw.write("\n");
+                currentIndex.get(word).addAll(index.get(word));
             }
-            fw.close();
-    
-            fw = new FileWriter(linksFile, true);
-            for (String link : links.keySet()) {
-                fw.write(link);
-                for (String url : links.get(link)) {
-                    fw.write(" | " + url);
-                }
-                fw.write("\n");
-            }
-            //fw.write("\n");
-            fw.close();
             
-            fw = new FileWriter(textSnippetFile, true);
-            for (int i = 0; i < webInfo.size(); i += 3) {
-                fw.write(webInfo.get(i) + " | " + webInfo.get(i + 1) + " | " + webInfo.get(i + 2) + "\n");
+            // Escrever o índice atualizado no arquivo de palavras
+            FileWriter writer = new FileWriter(wordsFile);
+            for (String word : currentIndex.keySet()) {
+                writer.write(word);
+                for (String url : currentIndex.get(word)) {
+                    writer.write(" | " + url);
+                }
+                writer.write("\n");
             }
-            fw.close();
+            writer.close();
+            
+            // Escrever os links no arquivo de links
+            FileWriter linksWriter = new FileWriter(linksFile, true);
+            for (String link : links.keySet()) {
+                linksWriter.write(link);
+                for (String url : links.get(link)) {
+                    linksWriter.write(" | " + url);
+                }
+                linksWriter.write("\n");
+            }
+            linksWriter.close();
+            
+            // Escrever os snippets de texto no arquivo de snippets
+            FileWriter snippetWriter = new FileWriter(textSnippetFile, true);
+            for (int i = 0; i < webInfo.size(); i += 3) {
+                snippetWriter.write(webInfo.get(i) + " | " + webInfo.get(i + 1) + " | " + webInfo.get(i + 2) + "\n");
+            }
+            snippetWriter.close();
             
             this.sem.release();
         } catch (Exception e) {
@@ -183,6 +214,19 @@ public class Barrel extends Thread implements Serializable {
                     resp.get(parts[0]).add(parts[2]);
                 }
             }
+            
+            fr = new BufferedReader(new FileReader(linksFile));
+            while ((line = fr.readLine()) != null) {
+                String[] parts = line.split(" \\| ");
+                if (urls.contains(parts[0])) {
+                    if (!resp.containsKey(parts[0]))
+                        resp.put(parts[0], new HashSet<>());
+                    for (int i = 1; i < parts.length; i++) {
+                        resp.get(parts[0]).add(parts[i]);
+                    }
+                }
+            }
+            
             
             this.sem.release();
         } catch (Exception e) {

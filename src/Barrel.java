@@ -16,7 +16,7 @@ public class Barrel extends Thread implements Serializable {
     private InetAddress group;
     private HashMap<String, HashSet<String>> index; //chave: palavra, valor: conjunto de urls
     private HashMap<String, HashSet<String>> links; //chave: url, valor: conjunto de urls
-    private ArrayList<String> webInfo; //chave: url, valor: snippet de texto
+    private HashMap<String, ArrayList<String>> webInfo; //chave: url, valor: snippet de texto
     private final String linksFilename; //nome do arquivo que guarda os links
     private final String wordsFilename; //nome do arquivo que guarda as palavras
     private final String textSnippetFilename; //nome do arquivo que guarda os snippets de texto
@@ -34,9 +34,9 @@ public class Barrel extends Thread implements Serializable {
         this.socket = new MulticastSocket(multicastPort);
         this.group = InetAddress.getByName(multicastAddress);
         this.socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkInterface.getByIndex(0));
-        //this.links = new HashMap<>();
-        //this.index = new HashMap<>();
-        //this.webInfo = new HashMap<>();
+        this.links = new HashMap<>();
+        this.index = new HashMap<>();
+        this.webInfo = new HashMap<>();
         
         this.linksFilename = "./database/links-" + id + ".txt";
         this.wordsFilename = "./database/palavras-" + id + ".txt";
@@ -53,9 +53,10 @@ public class Barrel extends Thread implements Serializable {
     public void run() {
         while (true) {
             try {
-                this.links = new HashMap<>();
-                this.index = new HashMap<>();
-                this.webInfo = new ArrayList<>();
+                //HashMap<String, HashSet<String>> auxLinks = new HashMap<>();
+                //HashMap<String, HashSet<String>> auxWords = new HashMap<>();
+                //ArrayList<String> auxInfo = new ArrayList<>();
+                
                 
                 byte[] buffer = new byte[32 * 1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -97,27 +98,31 @@ public class Barrel extends Thread implements Serializable {
                     
                 } else if (type.equals("textSnippet")) {
                     String titulo = list[2].split(" \\| ")[1];
-    
-                    String chave = list[3].split(" \\| ")[1];
-                    webInfo.add(url);
-                    webInfo.add(titulo);
+                    String texto = list[3].split(" \\| ")[1];
+                    
+                    if (!this.webInfo.containsKey(url)) {
+                        ArrayList<String> aux = new ArrayList<>();
+                        aux.add(titulo);
+                        aux.add(texto);
+                        this.webInfo.put(url, aux);
+                    }
+                    
                     System.out.println("titulo: " + titulo);
-                    webInfo.add(chave);
-                    System.out.println("chave: " + chave);
+                    System.out.println("chave: " + texto);
                     
                 }
                 
-                updateFiles(url, this.index, this.links, this.webInfo);
+                updateFiles();
             } catch (Exception e) {
                 System.out.println("[Erro no Barrel " + id + "] " + e);
             }
         }
     }
     
-    private void updateFiles(String url_original, HashMap<String, HashSet<String>> index, HashMap<String, HashSet<String>> links, ArrayList<String> webInfo) {
+    private void updateFiles() {
         try {
-            //TODO: esta shit é uma shit e nao esta como quero fds
             this.sem.acquire();
+            /*
             if (!linksFile.exists()) {
                 linksFile.createNewFile();
             }
@@ -142,66 +147,96 @@ public class Barrel extends Thread implements Serializable {
             
             // Atualizar o índice atual com as novas palavras e URLs
             for (String word : index.keySet()) {
-                if (!currentIndex.containsKey(word)) {
-                    currentIndex.put(word, new HashSet<>());
+                if (!this.index.containsKey(word)) {
+                    this..put(word, new HashSet<>());
                 }
                 currentIndex.get(word).addAll(index.get(word));
             }
+            */
             
-            // Escrever o índice atualizado no arquivo de palavras
             FileWriter writer = new FileWriter(wordsFile);
-            for (String word : currentIndex.keySet()) {
+            for (String word : this.index.keySet()) {
                 writer.write(word);
-                for (String url : currentIndex.get(word)) {
+                for (String url : this.index.get(word))
                     writer.write(" | " + url);
-                }
                 writer.write("\n");
             }
             writer.close();
             
-            // Escrever os links no arquivo de links
-            FileWriter linksWriter = new FileWriter(linksFile, true);
-            for (String link : links.keySet()) {
+            
+            FileWriter linksWriter = new FileWriter(linksFile);
+            for (String link : this.links.keySet()) {
                 linksWriter.write(link);
-                for (String url : links.get(link)) {
+                for (String url : this.links.get(link))
                     linksWriter.write(" | " + url);
-                }
                 linksWriter.write("\n");
             }
             linksWriter.close();
             
-            // Escrever os snippets de texto no arquivo de snippets
-            FileWriter snippetWriter = new FileWriter(textSnippetFile, true);
-            for (int i = 0; i < webInfo.size(); i += 3) {
-                snippetWriter.write(webInfo.get(i) + " | " + webInfo.get(i + 1) + " | " + webInfo.get(i + 2) + "\n");
+            
+            FileWriter snippetWriter = new FileWriter(textSnippetFile);
+            for (String url : this.webInfo.keySet()) {
+                snippetWriter.write(url + " | " + this.webInfo.get(url).toArray()[0] + " | " + this.webInfo.get(url).toArray()[1] + "\n");
             }
             snippetWriter.close();
             
             this.sem.release();
         } catch (Exception e) {
-            System.out.println("[EXCEPTION] While updating links: " + e);
+            System.out.println("[EXCEPTION] Erro a atualizar os ficheiros: " + e);
+        }
+    }
+    /*
+    private void guardarLinks() {
+        try (BufferedReader fr = new BufferedReader(new FileReader(linksFile))){
+            String line;
+            while ((line = fr.readLine()) != null) {
+                String[] parts = line.split(" \\| ");
+                
+                String url = parts[0];
+                if (!this.links.containsKey(url))
+                    this.links.put(url, new HashSet<>());
+                this.links.get(url).add(url);
+            }
+        } catch (Exception e) {
+            System.out.println("[EXCEPTION] Erro ao ler do ficheiro dos links: " + e);
         }
     }
     
-    
-    public void guardarURLs(String[] list) {
-    
+    private void guardarPalavras() {
+        try (BufferedReader fr = new BufferedReader(new FileReader(wordsFile))) {
+            String line;
+            while ((line = fr.readLine()) != null) {
+                String[] parts = line.split(" \\| ");
+                String word = parts[0];
+                if (!this.index.containsKey(word))
+                    this.index.put(word, new HashSet<>());
+                this.index.get(word).add(url);
+            }
+        } catch (Exception e) {
+            System.out.println("[EXCEPTION] Erro ao ler do ficheiro das palavras: " + e);
+        }
     }
     
-    public HashMap<String, HashSet<String>> obterLinks(String palavra) {
+    private void guardarInfo() {
+    
+    }
+    */
+    
+    
+    public HashMap<String, ArrayList<String>> obterLinks(String palavra) {
         System.out.println("Pesquisando links com a palavra: " + palavra);
         ArrayList<String> urls = new ArrayList<>();
-        HashMap<String, HashSet<String>> resp = new HashMap<>();
+        HashMap<String, ArrayList<String>> resp = new HashMap<>();
         
         try {
             this.sem.acquire();
             BufferedReader fr = new BufferedReader(new FileReader(wordsFile));
-    
             String line;
             while ((line = fr.readLine()) != null) {
                 String[] parts = line.split(" \\| ");
-                if (palavra.contains(parts[0]))
-                    urls.add(parts[1]);
+                if (palavra.contains(parts[0])) {
+                    urls.addAll(Arrays.asList(parts).subList(1, parts.length));
+                }
             }
             fr.close();
             
@@ -209,7 +244,7 @@ public class Barrel extends Thread implements Serializable {
             while ((line = fr.readLine()) != null) {
                 String[] parts = line.split(" \\| ");
                 if (urls.contains(parts[0])) {
-                    resp.put(parts[0], new HashSet<>());
+                    resp.put(parts[0], new ArrayList<>());
                     resp.get(parts[0]).add(parts[1]);
                     resp.get(parts[0]).add(parts[2]);
                 }
@@ -218,26 +253,26 @@ public class Barrel extends Thread implements Serializable {
             fr = new BufferedReader(new FileReader(linksFile));
             while ((line = fr.readLine()) != null) {
                 String[] parts = line.split(" \\| ");
-                if (urls.contains(parts[0])) {
-                    if (!resp.containsKey(parts[0]))
-                        resp.put(parts[0], new HashSet<>());
-                    for (int i = 1; i < parts.length; i++) {
-                        resp.get(parts[0]).add(parts[i]);
+                if (resp.containsKey(parts[0])) {
+                    if (resp.get(parts[0]).size() < 3) {
+                        resp.get(parts[0]).add(String.valueOf(0));
+                    } else {
+                        int atual = Integer.parseInt(resp.get(parts[0]).get(2));
+                        resp.get(parts[0]).set(2, String.valueOf(atual + 1));
                     }
                 }
             }
             
-            
             this.sem.release();
         } catch (Exception e) {
             System.out.println("[EXCEPTION] " + e);
-            HashMap<String, HashSet<String>> error = new HashMap<>();
-            error.put("Erro ao pesquisar links", new HashSet<>());
+            HashMap<String, ArrayList<String>> error = new HashMap<>();
+            error.put("Erro ao pesquisar links", new ArrayList<>());
             return error;
         }
         if (urls.isEmpty()) {
-            HashMap<String, HashSet<String>> error = new HashMap<>();
-            error.put("Nenhum link encontrado", new HashSet<>());
+            HashMap<String, ArrayList<String>> error = new HashMap<>();
+            error.put("Nenhum link encontrado", new ArrayList<>());
             return error;
         }
         return resp;

@@ -4,15 +4,15 @@ import src.Barrel;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 public interface RMIBarrelInterface extends Remote{
     //void guardarURLs(String[] list);
     Barrel selecionarBarrel() throws RemoteException;
     boolean alive() throws RemoteException;
     
-    HashMap<String, HashSet<String>> pesquisarLinks(String s) throws RemoteException;
+    HashMap<String, ArrayList<String>> pesquisarLinks(String s) throws RemoteException;
     /*
     
     ArrayList<String> checkUserRegistration(String username, String password, String firstName, String lastName) throws RemoteException;

@@ -124,11 +124,11 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         }
     }
     
-    public HashMap<String, HashSet<String>> pesquisarLinks(String s) throws RemoteException {
+    public HashMap<String, ArrayList<String>> pesquisarLinks(String s) throws RemoteException {
         Barrel barrel = this.selecionarBarrel();
         if (barrel == null) {
-            HashMap<String, HashSet<String>> result = new HashMap<>();
-            result.put("Erro", new HashSet<>());
+            HashMap<String, ArrayList<String>> result = new HashMap<>();
+            result.put("Erro", new ArrayList<>());
             return result;
         }
     

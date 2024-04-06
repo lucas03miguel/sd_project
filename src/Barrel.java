@@ -2,10 +2,7 @@ package src;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class Barrel extends Thread implements Serializable {
@@ -229,6 +226,16 @@ public class Barrel extends Thread implements Serializable {
         HashMap<String, ArrayList<String>> resp = new HashMap<>();
         
         try {
+            if (!wordsFile.exists()) {
+                boolean __ = wordsFile.createNewFile();
+            }
+            if (!textSnippetFile.exists()) {
+                boolean __ = textSnippetFile.createNewFile();
+            }
+            if (!linksFile.exists()) {
+                boolean __ = linksFile.createNewFile();
+            }
+            
             this.sem.acquire();
             BufferedReader fr = new BufferedReader(new FileReader(wordsFile));
             String line;
@@ -249,32 +256,55 @@ public class Barrel extends Thread implements Serializable {
                     resp.get(parts[0]).add(parts[2]);
                 }
             }
+            fr.close();
             
             fr = new BufferedReader(new FileReader(linksFile));
             while ((line = fr.readLine()) != null) {
                 String[] parts = line.split(" \\| ");
                 if (resp.containsKey(parts[0])) {
-                    if (resp.get(parts[0]).size() < 3) {
-                        resp.get(parts[0]).add(String.valueOf(0));
-                    } else {
-                        int atual = Integer.parseInt(resp.get(parts[0]).get(2));
-                        resp.get(parts[0]).set(2, String.valueOf(atual + 1));
-                    }
+                    resp.get(parts[0]).add(String.valueOf(parts.length - 1));
                 }
             }
-            
+            fr.close();
             this.sem.release();
         } catch (Exception e) {
             System.out.println("[EXCEPTION] " + e);
             HashMap<String, ArrayList<String>> error = new HashMap<>();
-            error.put("Erro ao pesquisar links", new ArrayList<>());
+            error.put("Erro", new ArrayList<>());
+            this.sem.release();
+            
+            
             return error;
         }
         if (urls.isEmpty()) {
+            System.out.println("[EXCEPTION] Nenhum link encontrado");
             HashMap<String, ArrayList<String>> error = new HashMap<>();
-            error.put("Nenhum link encontrado", new ArrayList<>());
+            error.put("Nenhum", new ArrayList<>());
             return error;
         }
-        return resp;
+        System.out.println("oiiii" + resp);
+    
+        ArrayList<Map.Entry<String, ArrayList<String>>> list = new ArrayList<>(resp.entrySet());
+    
+        for (int i = 0; i < list.size() - 1; i++) {
+            for (int j = 0; j < list.size() - 1 - i; j++) {
+                int a = Integer.parseInt(list.get(j).getValue().get(2));
+                System.out.println("aaaaaaaaaaaaaaa "+ a);
+                if (a < Integer.parseInt(list.get(j + 1).getValue().get(2))) {
+                    // Trocando as entradas se o valor do terceiro parâmetro do ArrayList for menor
+                    Map.Entry<String, ArrayList<String>> temp = list.get(j);
+                    list.set(j, list.get(j + 1));
+                    list.set(j + 1, temp);
+                }
+            }
+        }
+    
+        // Convertendo a lista ordenada de volta para um HashMap
+        HashMap<String, ArrayList<String>> sortedMap = new HashMap<>();
+        for (Map.Entry<String, ArrayList<String>> entry : list) {
+            sortedMap.put(entry.getKey(), entry.getValue());
+        }
+        System.out.println(resp);
+        return sortedMap;
     }
 }

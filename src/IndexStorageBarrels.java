@@ -104,17 +104,16 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
     
             IndexStorageBarrels mainBarrel = new IndexStorageBarrels(0, rmiHost, rmiPort, rmiRegister, multPort, multAddress);
     
-            for (int i = 1; i < 5; i++) {
+            for (int i = 1; i < 2; i++) {
         
                 if (multAddress == null || multPort == 0) {
                     System.out.println("[BARREL " + i + "] Erro ao ler as propriedades do ficheiro de configuração.");
-                    System.exit(1);
+                    System.exit(-1);
                 }
         
                 //File linkfile = new File("src/main/java/com/ProjetoSD/links-" + i);
                 //File wordfile = new File("src/main/java/com/ProjetoSD/words-" + i);
                 //File infofile = new File("src/main/java/com/ProjetoSD/info-" + i);
-        
                 //Database files = new Database();
                 Barrel barrel_t = new Barrel(i, multPort, multAddress);
                 mainBarrel.barrelsThreads.add(barrel_t);

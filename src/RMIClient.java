@@ -9,12 +9,9 @@ import java.io.InputStreamReader;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Properties;
+import java.util.*;
 import java.util.spi.AbstractResourceBundleProvider;
-import java.util.List;
+
 import static java.lang.Thread.sleep;
 
 public class RMIClient extends UnicastRemoteObject {
@@ -145,25 +142,31 @@ public class RMIClient extends UnicastRemoteObject {
                                 System.out.print("Pesquisa inválida (3+ carateres): ");
                                 searchQuery = br.readLine();
                             }
-                            HashMap<String, HashSet<String>> resp = serverInterface.pesquisar(searchQuery);
-                            System.out.println();
-                            int i = 0;
-                            int tamanho = resp.size();
-                            for (String link : resp.keySet()) {
-                                System.out.println("Link: " + link);
-                                System.out.println("Title: " + resp.get(link).toArray()[1]);
-                                System.out.println("Text: " + resp.get(link).toArray()[0]);
+                            HashMap<String, ArrayList<String>> resp = serverInterface.pesquisar(searchQuery);
+                            
+                            if (resp.containsKey("Erro")  || resp.containsKey("Nenhum")) {
+                                System.out.println("Nenhum resultado encontrado.");
+                                //continue;
+                            } else {
                                 System.out.println();
-                                i++;
-                                if (i == 10 && tamanho > 10) {
-                                    System.out.print("Deseja ver mais URLs? (s/n): ");
-                                    String escolha = br.readLine();
-                                    while (!escolha.equalsIgnoreCase("s") && !escolha.equalsIgnoreCase("n")) {
-                                        System.out.print("Escolha inválida. Deseja ver mais URLs? (s/n): ");
-                                        escolha = br.readLine();
-                                    }
-                                    if (escolha.equalsIgnoreCase("n")) {
-                                       break;
+                                int i = 0;
+                                int tamanho = resp.size();
+                                for (String link : resp.keySet()) {
+                                    System.out.println("Link: " + link);
+                                    System.out.println("Title: " + resp.get(link).toArray()[1]);
+                                    System.out.println("Text: " + resp.get(link).toArray()[0]);
+                                    System.out.println();
+                                    i++;
+                                    if (i == 10 && tamanho > 10) {
+                                        System.out.print("Deseja ver mais URLs? (s/n): ");
+                                        String escolha = br.readLine();
+                                        while (!escolha.equalsIgnoreCase("s") && !escolha.equalsIgnoreCase("n")) {
+                                            System.out.print("Escolha inválida. Deseja ver mais URLs? (s/n): ");
+                                            escolha = br.readLine();
+                                        }
+                                        if (escolha.equalsIgnoreCase("n")) {
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -188,14 +191,10 @@ public class RMIClient extends UnicastRemoteObject {
                         case "3" -> {
                             // TODO: sao os fucking barris de vinho
                             System.out.println("<----Lista dos barrels---->");
-                            try {
-                                List<String> barrelsList = serverInterface.getBarrelsList();
-                                for (String barrelName : barrelsList) {
-                                    System.out.println(barrelName);
-                                }
-                            } catch (RemoteException e) {
-                                System.out.println("[EXCEPTION] Erro ao obter a lista de barrels: " + e);
-                            }
+                            
+                            List<String> barrelsList = serverInterface.getBarrelsList();
+                            for (String barrelName : barrelsList)
+                                System.out.println(barrelName);
                             System.out.println("-------------------------");
                         }
                         case "4" -> {
@@ -225,6 +224,7 @@ public class RMIClient extends UnicastRemoteObject {
             System.out.println("[EXCEPTION] Exceção na main: " + e);
             System.out.println("adeus");
             e.printStackTrace();
+            System.exit(-1);
         }
     }
     

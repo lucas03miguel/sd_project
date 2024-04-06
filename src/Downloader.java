@@ -247,17 +247,18 @@ public class Downloader extends Thread implements Remote {
         Set<String> listaPalavras = webPage.getWords();
         String url = webPage.getUrl();
         String title = webPage.getTitle();
+        System.out.println("[DOWNLOADER] Enviando mensagem");
         
         String message = "type | links; url | " + url + "; links_count | " + links.size();
         for (String link : links)
             message = message.concat("; link | " + link);
-        System.out.println("[DOWNLOADER] Enviando links: " + message);
+        //System.out.println("[DOWNLOADER] Enviando links: " + message);
         sendMessage(message);
         
         message = "type | words; url | " + url + "; words_count | " + listaPalavras.size();
         for (String word : listaPalavras)
             message = message.concat("; word | " + word);
-        System.out.println("[DOWNLOADER] Enviando palavras: " + message);
+        //System.out.println("[DOWNLOADER] Enviando palavras: " + message);
         sendMessage(message);
         
         message = "type | textSnippet; url | " + url + "; title | " + title + "; textSnippet | " + webPage.getTextSnippet();

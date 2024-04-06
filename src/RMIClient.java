@@ -147,12 +147,26 @@ public class RMIClient extends UnicastRemoteObject {
                             }
                             HashMap<String, HashSet<String>> resp = serverInterface.pesquisar(searchQuery);
                             System.out.println();
+                            int i = 0;
+                            int tamanho = resp.size();
                             for (String link : resp.keySet()) {
                                 System.out.println("Link: " + link);
-                                
                                 System.out.println("Title: " + resp.get(link).toArray()[1]);
                                 System.out.println("Text: " + resp.get(link).toArray()[0]);
                                 System.out.println();
+                                i++;
+                                if (i == 10 && tamanho > 10) {
+                                    System.out.print("Deseja ver mais URLs? (s/n): ");
+                                    String escolha = br.readLine();
+                                    while (!escolha.equalsIgnoreCase("s") && !escolha.equalsIgnoreCase("n")) {
+                                        System.out.print("Escolha inválida. Deseja ver mais URLs? (s/n): ");
+                                        escolha = br.readLine();
+                                    }
+                                    if (escolha.equalsIgnoreCase("n")) {
+                                       break;
+                                    }
+                                }
+                                
                             }
 
                         }

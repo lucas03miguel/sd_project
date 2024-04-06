@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Properties;
+import java.util.List;
 
 public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarrelInterface{
     private final int id;
@@ -32,6 +33,7 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         this.barrelsHostName = host;
         this.barrelsPort = port;
         this.barrelsRMIRegister = rmiRegister;
+        
     
         //LocateRegistry.createRegistry(port);
         this.multPort = multPort;
@@ -135,7 +137,13 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         return barrel.obterLinks(s);
     }
     
-    
+    public List<String> getBarrelsList() {
+        List<String> barrelNames = new ArrayList<>();
+        for (Barrel barrel : barrelsThreads) {
+            barrelNames.add("Barrel " + barrel.getId());
+        }
+        return barrelNames;
+    }
     
     public boolean alive() throws RemoteException {
         Barrel barrel = this.selecionarBarrel();

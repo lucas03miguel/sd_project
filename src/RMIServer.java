@@ -17,6 +17,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Properties;
+import java.util.List;
 
 import static java.lang.Thread.sleep;
 
@@ -37,7 +38,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         this.barrelRMIHost = barrelRMIHost;
         this.barrelRMIRegistryName = barrelRMIRegistryName;
         this.hPrincipal = null;
-    
+        
         while (true) {
             try {
                 Registry r = LocateRegistry.createRegistry(rmiPort);
@@ -176,6 +177,11 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         return resp;
         //System.out.println("> " + s);
         //print_on_all_clients(s);
+    }
+
+    @Override
+    public List<String> getBarrelsList() throws RemoteException {
+    return barrel.getBarrelsList();
     }
     /*
     public void print_on_all_clients(String s) {

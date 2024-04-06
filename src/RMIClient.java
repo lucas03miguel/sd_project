@@ -146,10 +146,15 @@ public class RMIClient extends UnicastRemoteObject {
                                 searchQuery = br.readLine();
                             }
                             HashMap<String, HashSet<String>> resp = serverInterface.pesquisar(searchQuery);
-                            System.out.println(resp);
-                            
-                            
-                            
+                            System.out.println();
+                            for (String link : resp.keySet()) {
+                                System.out.println("Link: " + link);
+                                
+                                System.out.println("Title: " + resp.get(link).toArray()[1]);
+                                System.out.println("Text: " + resp.get(link).toArray()[0]);
+                                System.out.println();
+                            }
+
                         }
                         case "2" -> {
                             System.out.println("<----Indexar novo URL---->");

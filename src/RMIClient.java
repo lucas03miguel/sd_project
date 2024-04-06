@@ -206,7 +206,14 @@ public class RMIClient extends UnicastRemoteObject {
                         }
                         case "5" -> {
                             System.out.println("<----Top 10 pesquisas---->");
-                            //serverInterface.top10();
+                            try {
+                                List<String> topSearches = serverInterface.getTopSearches();
+                                for (int i = 0; i < topSearches.size(); i++) {
+                                    System.out.println((i + 1) + ". " + topSearches.get(i));
+                                }
+                            } catch (RemoteException e) {
+                                System.out.println("[EXCEPTION] Erro ao obter as top 10 pesquisas: " + e);
+                            }
                             System.out.println("------------------------");
                         }
                         case "6" -> {

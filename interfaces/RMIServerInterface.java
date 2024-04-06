@@ -11,6 +11,7 @@ public interface RMIServerInterface extends Remote {
     String checkRegisto(String username, String password) throws RemoteException;
     String indexar(String url) throws RemoteException;
     List<String> getBarrelsList() throws RemoteException;
+    List<String> getTopSearches() throws RemoteException;
     
     HashMap<String, HashSet<String>> pesquisar(String s) throws RemoteException;
     boolean alive() throws RemoteException;

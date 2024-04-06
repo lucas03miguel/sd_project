@@ -193,6 +193,16 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
 
     @Override
+    public List<String> getDownloadersList() throws RemoteException {
+
+    List<String> downloadersList = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+        downloadersList.add("Downloader " + i);
+    }
+    return downloadersList;
+    }
+
+    @Override
     public List<String> getTopSearches() throws RemoteException {
         // Ordena as pesquisas por contagem em ordem decrescente
         List<Map.Entry<String, Integer>> sortedSearches = new ArrayList<>(searchCounts.entrySet());

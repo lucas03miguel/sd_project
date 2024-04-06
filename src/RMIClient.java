@@ -166,7 +166,6 @@ public class RMIClient extends UnicastRemoteObject {
                                        break;
                                     }
                                 }
-                                
                             }
 
                         }

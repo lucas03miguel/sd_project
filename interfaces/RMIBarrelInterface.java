@@ -6,11 +6,13 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public interface RMIBarrelInterface extends Remote{
     //void guardarURLs(String[] list);
     Barrel selecionarBarrel() throws RemoteException;
     boolean alive() throws RemoteException;
+    List<String> getBarrelsList() throws RemoteException;
     
     HashMap<String, HashSet<String>> pesquisarLinks(String s) throws RemoteException;
     /*

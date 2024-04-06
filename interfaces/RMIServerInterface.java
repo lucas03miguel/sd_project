@@ -4,11 +4,13 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public interface RMIServerInterface extends Remote {
     int checkLogin(String username, String password) throws RemoteException;
     String checkRegisto(String username, String password) throws RemoteException;
     String indexar(String url) throws RemoteException;
+    List<String> getBarrelsList() throws RemoteException;
     
     HashMap<String, HashSet<String>> pesquisar(String s) throws RemoteException;
     boolean alive() throws RemoteException;

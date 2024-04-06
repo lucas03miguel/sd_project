@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.spi.AbstractResourceBundleProvider;
-
+import java.util.List;
 import static java.lang.Thread.sleep;
 
 public class RMIClient extends UnicastRemoteObject {
@@ -188,7 +188,14 @@ public class RMIClient extends UnicastRemoteObject {
                         case "3" -> {
                             // TODO: sao os fucking barris de vinho
                             System.out.println("<----Lista dos barrels---->");
-                            //serverInterface.downloadersList();
+                            try {
+                                List<String> barrelsList = serverInterface.getBarrelsList();
+                                for (String barrelName : barrelsList) {
+                                    System.out.println(barrelName);
+                                }
+                            } catch (RemoteException e) {
+                                System.out.println("[EXCEPTION] Erro ao obter a lista de barrels: " + e);
+                            }
                             System.out.println("-------------------------");
                         }
                         case "4" -> {

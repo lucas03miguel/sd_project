@@ -127,8 +127,6 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
     public HashMap<String, HashSet<String>> pesquisarLinks(String s) throws RemoteException {
         Barrel barrel = this.selecionarBarrel();
         if (barrel == null) {
-            // "status:failure | message:No barrels available"
-            // return an Hashset with status and message
             HashMap<String, HashSet<String>> result = new HashMap<>();
             result.put("Erro", new HashSet<>());
             return result;

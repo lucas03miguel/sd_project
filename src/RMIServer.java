@@ -14,8 +14,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Properties;
 
 import static java.lang.Thread.sleep;
@@ -162,15 +162,15 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
     
     @Override
-    public String[] pesquisar(String s) throws RemoteException {
-        this.barrel.pesquisarLinks(s);
+    public HashMap<String, HashSet<String>> pesquisar(String s) throws RemoteException {
+        //this.barrel.pesquisarLinks(s);
         //if (b == null) return new String[]{"Erro ao selecionar barrel"};
         
         String[] palavras = s.split(" ");
-        String[] resp = new String[0];
+        HashMap<String, HashSet<String>> resp = new HashMap<>();
         for (String palavra : palavras) {
             resp = barrel.pesquisarLinks(palavra);
-            System.out.println(Arrays.toString(resp));
+            System.out.println(resp);
         }
         
         return resp;

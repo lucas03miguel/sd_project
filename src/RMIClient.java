@@ -10,6 +10,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.spi.AbstractResourceBundleProvider;
 
@@ -143,8 +145,11 @@ public class RMIClient extends UnicastRemoteObject {
                                 System.out.print("Pesquisa inválida (3+ carateres): ");
                                 searchQuery = br.readLine();
                             }
-                            String[] resp = serverInterface.pesquisar(searchQuery);
-                            System.out.println(Arrays.toString(resp));
+                            HashMap<String, HashSet<String>> resp = serverInterface.pesquisar(searchQuery);
+                            System.out.println(resp);
+                            
+                            
+                            
                         }
                         case "2" -> {
                             System.out.println("<----Indexar novo URL---->");

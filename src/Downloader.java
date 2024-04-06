@@ -154,12 +154,12 @@ public class Downloader extends Thread implements Remote {
     
     private String extrairTitulo(Document doc) {
         String title = doc.title();
-        return title != null ? title : "";
+        return title != null ? title : "Sem titulo";
     }
     
     private String extrairCitacao(Document doc) {
         Elements paragraphs = doc.select("p");
-        return !paragraphs.isEmpty() ? paragraphs.next().text() : "";
+        return !paragraphs.isEmpty() ? paragraphs.first().text() : "";
     }
     
     private Set<String> extrairPalavras(Document doc) {
@@ -210,7 +210,6 @@ public class Downloader extends Thread implements Remote {
     
             String title = extrairTitulo(document);
             String textSnippet = extrairCitacao(document);
-            System.out.println(textSnippet);
             Set<String> words = extrairPalavras(document);
     
             WebPage webPage = new WebPage(url, title, textSnippet, words);
@@ -247,20 +246,21 @@ public class Downloader extends Thread implements Remote {
     private void enviarParaBarrels(WebPage webPage, ArrayList<String> links) {
         Set<String> listaPalavras = webPage.getWords();
         String url = webPage.getUrl();
+        String title = webPage.getTitle();
         
-        String message = "type | links; links_count | " + links.size() + "; url | " + url;
+        String message = "type | links; url | " + url + "; links_count | " + links.size();
         for (String link : links)
             message = message.concat("; link | " + link);
         System.out.println("[DOWNLOADER] Enviando links: " + message);
         sendMessage(message);
         
-        message = "type | words; words_count | " + listaPalavras.size() + "; url | " + url;
+        message = "type | words; url | " + url + "; words_count | " + listaPalavras.size();
         for (String word : listaPalavras)
             message = message.concat("; word | " + word);
         System.out.println("[DOWNLOADER] Enviando palavras: " + message);
         sendMessage(message);
         
-        message = "type | textSnippet; textSnippet_count | 1; url | " + url + "; textSnippet | " + webPage.getTextSnippet();
+        message = "type | textSnippet; url | " + url + "; title | " + title + "; textSnippet | " + webPage.getTextSnippet();
         sendMessage(message);
     }
     /*

@@ -2,14 +2,15 @@ package interfaces;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public interface RMIServerInterface extends Remote {
     int checkLogin(String username, String password) throws RemoteException;
     String checkRegisto(String username, String password) throws RemoteException;
     String indexar(String url) throws RemoteException;
     
-    String[] pesquisar(String searchQuery) throws RemoteException;
-    
+    HashMap<String, HashSet<String>> pesquisar(String s) throws RemoteException;
     boolean alive() throws RemoteException;
     
     /*

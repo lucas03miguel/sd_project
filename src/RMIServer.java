@@ -20,6 +20,7 @@ import java.util.Properties;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
+
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -170,32 +171,32 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
     
     @Override
-public HashMap<String, HashSet<String>> pesquisar(String s) throws RemoteException {
-    String[] palavras = s.split(" ");
-    long startTime = System.currentTimeMillis();
-    HashMap<String, HashSet<String>> resp = new HashMap<>();
-    for (String palavra : palavras) {
-        HashMap<String, HashSet<String>> barrelResults = barrel.pesquisarLinks(palavra);
-        for (String barrelName : barrelResults.keySet()) {
-            HashSet<String> links = resp.getOrDefault(barrelName, new HashSet<>());
-            links.addAll(barrelResults.get(barrelName));
-            resp.put(barrelName, links);
+    public HashMap<String, ArrayList<String>> pesquisar(String s) throws RemoteException {
+        String[] palavras = s.split(" ");
+        long startTime = System.currentTimeMillis();
+        HashMap<String, ArrayList<String>> resp = new HashMap<>();
+        for (String palavra : palavras) {
+            HashMap<String, ArrayList<String>> barrelResults = barrel.pesquisarLinks(palavra);
+            for (String barrelName : barrelResults.keySet()) {
+                ArrayList<String> links = resp.getOrDefault(barrelName, new ArrayList<>());
+                links.addAll(barrelResults.get(barrelName));
+                resp.put(barrelName, links);
+            }
         }
+        long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
+        for (String barrelName : resp.keySet()) {
+            List<Long> durations = searchDurations.getOrDefault(barrelName, new ArrayList<>());
+            durations.add(duration);
+            searchDurations.put(barrelName, durations);
+        }
+        searchCounts.put(s, searchCounts.getOrDefault(s, 0) + 1);
+        return resp;
     }
-    long endTime = System.currentTimeMillis();
-    long duration = endTime - startTime;
-    for (String barrelName : resp.keySet()) {
-        List<Long> durations = searchDurations.getOrDefault(barrelName, new ArrayList<>());
-        durations.add(duration);
-        searchDurations.put(barrelName, durations);
-    }
-    searchCounts.put(s, searchCounts.getOrDefault(s, 0) + 1);
-    return resp;
-}
 
     @Override
-    public List<String> getBarrelsList() throws RemoteException {
-    return barrel.getBarrelsList();
+    public List<String> obterListaBarrels() throws RemoteException {
+        return barrel.obterListaBarrels();
     }
 
     @Override
@@ -210,7 +211,7 @@ public HashMap<String, HashSet<String>> pesquisar(String s) throws RemoteExcepti
 }
 
     @Override
-    public List<String> getTopSearches() throws RemoteException {
+    public HashMap<String> getTopSearches() throws RemoteException {
         // Ordena as pesquisas por contagem em ordem decrescente
         List<Map.Entry<String, Integer>> sortedSearches = new ArrayList<>(searchCounts.entrySet());
         sortedSearches.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));

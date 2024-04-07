@@ -2,20 +2,19 @@ package interfaces;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
 public interface RMIServerInterface extends Remote {
     int checkLogin(String username, String password) throws RemoteException;
     String checkRegisto(String username, String password) throws RemoteException;
     String indexar(String url) throws RemoteException;
-    List<String> getBarrelsList() throws RemoteException;
-    List<String> getTopSearches() throws RemoteException;
+    List<String> obterListaBarrels() throws RemoteException;
+    HashMap<String, Integer> getTopSearches() throws RemoteException;
     HashMap<String, Double> getAverageSearchTime() throws RemoteException;
-
     
-    HashMap<String, HashSet<String>> pesquisar(String s) throws RemoteException;
+    HashMap<String, ArrayList<String>> pesquisar(String s) throws RemoteException;
     boolean alive() throws RemoteException;
     
     /*

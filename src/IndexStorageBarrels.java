@@ -189,6 +189,25 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
     }
     
     /**
+     * Método para obter as ligações de um link.
+     *
+     * @param id id do barrel
+     * @param link link a pesquisar
+     * @return lista de ligações
+     * @throws RemoteException se ocorrer um erro durante a execução de um método remoto
+     */
+    @Override
+    public ArrayList<String> obterLigacoes(int id, String link) throws RemoteException {
+        Barrel barrel = this.getBarrel(id);
+        if (barrel == null) {
+            ArrayList<String> result = new ArrayList<>();
+            result.add("Erro");
+            return result;
+        }
+        return barrel.obterLigacoes(link);
+    }
+    
+    /**
      * Método para retornar o barrel com o id especificado.
      *
      * @param id id do barrel

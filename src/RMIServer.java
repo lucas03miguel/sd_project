@@ -362,6 +362,18 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
     
     /**
+     * Método para obter as ligações de um link.
+     * @param link link a pesquisar
+     * @return lista de ligações
+     * @throws RemoteException se ocorrer um erro durante a conexão remota
+     */
+    @Override
+    public ArrayList<String> obterLigacoes(String link) throws RemoteException {
+        int id = barrel.selecionarBarrel();
+        return this.barrel.obterLigacoes(id, link);
+    }
+    
+    /**
      * Método para tentar reconectar ao barrel.
      *
      * @param rmiHost host do registo RMI do barrel

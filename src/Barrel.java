@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 
 /**
- * A classe Barrel é responsável por porcessar e guardar as informações dos sites.
+ * A classe Barrel é responsável por processar e guardar as informações dos sites.
  */
 public class Barrel extends Thread implements Serializable {
     /**
@@ -425,5 +425,30 @@ public class Barrel extends Thread implements Serializable {
      */
     public HashMap<Integer, Integer> getNPesquisas() {
         return this.pesquisas;
+    }
+    
+    /**
+     * Método que retorna as ligacoes de um link
+     * @return ArrayList com as ligações
+     */
+    public ArrayList<String> obterLigacoes(String link) {
+        ArrayList<String> resp = new ArrayList<>();
+        try {
+            this.semUpdateLinks.acquire();
+            BufferedReader fr = new BufferedReader(new FileReader(linksFile));
+            String line;
+            while ((line = fr.readLine()) != null) {
+                String[] parts = line.split(" \\| ");
+                if (link.equals(parts[0])) {
+                    resp.addAll(Arrays.asList(parts).subList(1, parts.length));
+                }
+            }
+            this.semUpdateLinks.release();
+            fr.close();
+        } catch (Exception e) {
+            this.semUpdateLinks.release();
+            System.out.println("[EXCEPTION] Erro ao obter as ligações: " + e);
+        }
+        return resp;
     }
 }

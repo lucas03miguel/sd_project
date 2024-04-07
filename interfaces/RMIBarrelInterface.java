@@ -22,4 +22,5 @@ public interface RMIBarrelInterface extends Remote{
     List<String> obterListaBarrels() throws RemoteException;
     HashMap<String, ArrayList<String>> pesquisarLinks(String s, int id) throws RemoteException;
     int getId() throws RemoteException;
+    ArrayList<String> obterLigacoes(int id, String link) throws RemoteException;
 }

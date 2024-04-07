@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 
 
-public class Downloader extends Thread implements Remote, Serializable {
+public class Downloader extends Thread implements Remote {
     //private final String multicastAddress;
     private final int multicastPort;
     private final InetAddress group;

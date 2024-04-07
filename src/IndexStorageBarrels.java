@@ -3,7 +3,6 @@ package src;
 import interfaces.RMIBarrelInterface;
 
 import java.io.FileInputStream;
-import java.io.Serializable;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -11,7 +10,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
-public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarrelInterface, Serializable {
+public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarrelInterface {
     private final int id;
     private final String barrelsHostName;
     private final int barrelsPort;
@@ -126,12 +125,16 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
     }
     
     @Override
-    public HashMap<String, ArrayList<String>> pesquisarLinks(String s, Barrel b) throws RemoteException {
-        
+    public HashMap<String, ArrayList<String>> pesquisarLinks(String s, int id) throws RemoteException {
         //duracoesBarrel.put(barrel.getIdBarrel(), 0.);
+        Barrel b = this.getBarrel(id);
+        if (b == null) {
+            HashMap<String, ArrayList<String>> result = new HashMap<>();
+            result.put("Erro", null);
+            return result;
+        }
         
         HashMap<String, ArrayList<String>> result = b.obterLinks(s);
-        
         this.nPesquisas = b.getNPesquisas();
         //Double tempo = duracoesBarrel.get(barrel.getIdBarrel());
         //duracoesBarrel.put(barrel.getIdBarrel(), (double) (endTime - startTime) / 100 + tempo);
@@ -152,14 +155,14 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
     }
     
     @Override
-    public HashMap<String, Integer> obterTopSearches() throws RemoteException {
-        Barrel barrel = this.selecionarBarrel();
-        if (barrel == null) {
+    public HashMap<String, Integer> obterTopSearches(int id) throws RemoteException {
+        Barrel b = this.getBarrel(id);
+        if (b == null) {
             HashMap<String, Integer> result = new HashMap<>();
             result.put("Erro", null);
             return result;
         }
-        return barrel.obterTopSearches();
+        return b.obterTopSearches();
     }
     
     
@@ -167,12 +170,13 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
     
     @Override
     public boolean alive() throws RemoteException {
-        Barrel barrel = this.selecionarBarrel();
+        int id = this.selecionarBarrel();
+        Barrel barrel = this.getBarrel(id);
         return barrel != null;
     }
     
     @Override
-    public Barrel selecionarBarrel() {
+    public int selecionarBarrel() {
         if (this.barrelsThreads.size() == 0) {
             System.out.println("[BARREL-INTERFACE] Nenhum barrel disponivel. À espera que um barrel fique disponivel...");
             try {
@@ -189,7 +193,7 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
             this.barrelsThreads.remove(random);
             return this.selecionarBarrel();
         }
-        return this.barrelsThreads.get(random);
+        return this.barrelsThreads.get(random).getIdBarrel();
     }
     
     private void tentarNovamente(String rmiHost, int rmiPort, String rmiRegister) throws RemoteException {
@@ -221,6 +225,15 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
     @Override
     public int getId() throws RemoteException {
         return id;
+    }
+    
+    public Barrel getBarrel(int id) {
+        for (Barrel barrel : barrelsThreads) {
+            if (barrel.getIdBarrel() == id) {
+                return barrel;
+            }
+        }
+        return null;
     }
     
 }

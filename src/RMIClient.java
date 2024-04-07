@@ -10,7 +10,7 @@ import java.util.*;
 
 import static java.lang.Thread.sleep;
 
-public class RMIClient extends UnicastRemoteObject implements Serializable {
+public class RMIClient extends UnicastRemoteObject {
     private final int keepAliveTime = 5000;
     private final String rmiHost;
     private final int rmiPort;

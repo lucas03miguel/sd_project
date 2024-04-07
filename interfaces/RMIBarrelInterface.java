@@ -10,11 +10,13 @@ import java.util.List;
 
 public interface RMIBarrelInterface extends Remote{
     //void guardarURLs(String[] list);
-    Barrel selecionarBarrel() throws RemoteException;
+    int selecionarBarrel() throws RemoteException;
+    
+    HashMap<String, Integer> obterTopSearches(int id) throws RemoteException;
+    
     boolean alive() throws RemoteException;
     List<String> obterListaBarrels() throws RemoteException;
-    HashMap<String, Integer> obterTopSearches() throws RemoteException;
-    HashMap<String, ArrayList<String>> pesquisarLinks(String s, Barrel b) throws RemoteException;
+    HashMap<String, ArrayList<String>> pesquisarLinks(String s, int id) throws RemoteException;
     HashMap<Integer, Integer> obterPesquisas() throws RemoteException;
     int getId() throws RemoteException;
     /*

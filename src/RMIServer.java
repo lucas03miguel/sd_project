@@ -18,7 +18,7 @@ import java.util.*;
 
 import static java.lang.Thread.sleep;
 
-public class RMIServer extends UnicastRemoteObject implements RMIServerInterface, Serializable {
+public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
     private RMIServerInterface hPrincipal;
     private HashMap<String, Integer> searchCounts = new HashMap<>();
     private HashMap<String, List<Long>> searchDurations = new HashMap<>();
@@ -175,15 +175,14 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         HashMap<String, ArrayList<String>> aux = new HashMap<>();
         HashMap<Integer, Double> tempos = new HashMap<>();
         for (String palavra : palavras) {
-            Barrel barrelEscolhido = this.barrel.selecionarBarrel();
+            int idBarrelEscolhido = this.barrel.selecionarBarrel();
             startTime = System.currentTimeMillis();
-            aux = barrel.pesquisarLinks(palavra, barrelEscolhido);
+            aux = barrel.pesquisarLinks(palavra, idBarrelEscolhido);
             endTime = System.currentTimeMillis();
             
             double tempo = (double) (endTime - startTime);
-            int id = barrelEscolhido.getIdBarrel();
-            if (!tempos.containsKey(id)) tempos.put(id, tempo);
-            else tempos.put(id, tempos.get(id) + tempo);
+            if (!tempos.containsKey(idBarrelEscolhido)) tempos.put(idBarrelEscolhido, tempo);
+            else tempos.put(idBarrelEscolhido, tempos.get(idBarrelEscolhido) + tempo);
         }
         
         
@@ -205,7 +204,8 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
 
     @Override
     public HashMap<String, Integer> getTopSearches() throws RemoteException {
-        return this.barrel.obterTopSearches();
+        int id = this.barrel.selecionarBarrel();
+        return this.barrel.obterTopSearches(id);
     }
     
     public int checkLogin(String username, String password) throws RemoteException {

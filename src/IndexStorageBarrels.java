@@ -11,44 +11,53 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
 
+/**
+ * A classe IndexStorageBarrels representa um indexador de barrels implementado como um serviço RMI.
+ * Permite pesquisar links, obter a lista de barrels, obter as pesquisas mais populares e o tempo medio de pesquisa.
+ */
 public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarrelInterface {
+    /**
+     * id do index
+     */
     private final int id;
-    private final String barrelsHostName;
-    private final int barrelsPort;
-    private final String barrelsRMIRegister;
-    private final int multPort;
-    private final String multAddress;
+    /**
+     * lista de barrels
+     */
     private final ArrayList<Barrel> barrelsThreads;
-    //private final MulticastSocket socket;
-    //private final InetAddress group;
+    /**
+     * interface do barrel
+     */
     private RMIBarrelInterface barrel;
+    /**
+     * numero de pesquisas
+     */
     private HashMap<Integer, Integer> nPesquisas;
     
-    public IndexStorageBarrels(int id, String host, int port, String rmiRegister, int multPort, String multAddress) throws Exception {
+    /**
+     * Construtor da classe IndexStorageBarrels.
+     *
+     * @param id id do index
+     * @param host host do registo RMI
+     * @param port porta do registo RMI
+     * @param rmiRegister nome do registo RMI
+     * @throws Exception se ocorrer um erro durante a criação do objeto remoto
+     */
+    public IndexStorageBarrels(int id, String host, int port, String rmiRegister) throws Exception {
         super();
         this.id = id;
         this.barrelsThreads = new ArrayList<>();
         this.nPesquisas = new HashMap<>();
-        this.barrelsHostName = host;
-        this.barrelsPort = port;
-        this.barrelsRMIRegister = rmiRegister;
-        
-    
-        //LocateRegistry.createRegistry(port);
-        this.multPort = multPort;
-        this.multAddress = multAddress;
-        //this.socket = new MulticastSocket(multPort);
-        //this.group = InetAddress.getByName(multAddress);
-        //this.socket.joinGroup(new InetSocketAddress(group, multPort), NetworkInterface.getByIndex(0));
     
         try {
             Registry r = LocateRegistry.createRegistry(port);
             System.setProperty("java.rmi.server.hostname", host);
             r.rebind(rmiRegister, this);
         
-            //r.rebind(rmiRegister, mainBarrel);
             System.out.println("[BARREL-INTERFACE] BARREL RMI criado em: " + host + ":" + port + "->" + rmiRegister);
         
         } catch (RemoteException e) {
@@ -62,32 +71,13 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
                 System.out.println("[INDEX-STORAGE-BARRELS]" + ei);
             }
         }
-        
-        /*
-        String message = "OIIIIIIIIIIIIIII";
-        //while (true) {
-        byte[] buffer = message.getBytes();
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, multPort);
-        //System.out.println("Enviando pacote");
-        this.socket.send(packet);
-        System.out.println("Pacote enviado");
-        
-        Thread.sleep(1000); // Aguarda 1 segundo antes de enviar a próxima mensagem
-        //}
-        //Naming.rebind(rmiRegister, (RMIBarrelInterface)this);
-        //byte[] buffer = new byte[256];
-        //DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-        //socket.receive(packet);
-    
-        //System.out.println("Received packet from " + packet.getAddress().getHostAddress() + ":" + packet.getPort() + " with message:");
-        //String message = new String(packet.getData(), 0, packet.getLength());
-        //System.out.println("ududhdhdhd");
-        //System.out.println(message);
-        */
-        //start();
     }
     
-    
+    /**
+     * Método principal para inicializar o indexador de barrels.
+     *
+     * @param args argumentos de linha de comando (não utilizado)
+     */
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
         Properties prop = new Properties();
@@ -103,7 +93,7 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
             String rmiHost = prop.getProperty("HOST_BARRELS");
             String rmiRegister = prop.getProperty("RMI_REGISTRY_NAME_BARRELS");
     
-            IndexStorageBarrels mainBarrel = new IndexStorageBarrels(0, rmiHost, rmiPort, rmiRegister, multPort, multAddress);
+            IndexStorageBarrels mainBarrel = new IndexStorageBarrels(0, rmiHost, rmiPort, rmiRegister);
             
             int nBarrels = Integer.parseInt(prop.getProperty("N_BARRELS"));
             for (int i = 1; i < nBarrels + 1; i++) {
@@ -112,11 +102,7 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
                     System.out.println("[BARREL " + i + "] Erro ao ler as propriedades do ficheiro de configuração.");
                     System.exit(-1);
                 }
-        
-                //File linkfile = new File("src/main/java/com/ProjetoSD/links-" + i);
-                //File wordfile = new File("src/main/java/com/ProjetoSD/words-" + i);
-                //File infofile = new File("src/main/java/com/ProjetoSD/info-" + i);
-                //Database files = new Database();
+                
                 Barrel barrel_t = new Barrel(i, multPort, multAddress);
                 mainBarrel.barrelsThreads.add(barrel_t);
                 barrel_t.start();
@@ -124,12 +110,20 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
             
         } catch (Exception e) {
             System.out.println("[INDEX-STORAGE-BARRELS] Erro: " + e);
+            System.out.println("oi");
         }
     }
     
+    /**
+     * Método para pesquisar links.
+     *
+     * @param s string a pesquisar
+     * @param id id do barrel selecionado
+     * @return lista de links
+     * @throws RemoteException se ocorrer um erro durante a execução de um método remoto
+     */
     @Override
     public HashMap<String, ArrayList<String>> pesquisarLinks(String s, int id) throws RemoteException {
-        //duracoesBarrel.put(barrel.getIdBarrel(), 0.);
         Barrel b = this.getBarrel(id);
         if (b == null) {
             HashMap<String, ArrayList<String>> result = new HashMap<>();
@@ -139,15 +133,15 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         
         HashMap<String, ArrayList<String>> result = b.obterLinks(s);
         this.nPesquisas = b.getNPesquisas();
-        //Double tempo = duracoesBarrel.get(barrel.getIdBarrel());
-        //duracoesBarrel.put(barrel.getIdBarrel(), (double) (endTime - startTime) / 100 + tempo);
         return result;
     }
-    @Override
-    public HashMap<Integer, Integer> obterPesquisas() throws RemoteException {
-        return nPesquisas;
-    }
     
+    /**
+     * Método para obter a lista de barrels.
+     *
+     * @return lista de barrels
+     * @throws RemoteException se ocorrer um erro durante a execução de um método remoto
+     */
     @Override
     public List<String> obterListaBarrels() throws RemoteException {
         List<String> barrelNames = new ArrayList<>();
@@ -157,6 +151,13 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         return barrelNames;
     }
     
+    /**
+     * Método para obter o top 10 de pesquisas.
+     *
+     * @param id id do barrel selecionado
+     * @return hasmap com o top 10 de pesquisas
+     * @throws RemoteException se ocorrer um erro durante a execução de um método remoto
+     */
     @Override
     public HashMap<String, Integer> obterTopSearches(int id) throws RemoteException {
         Barrel b = this.getBarrel(id);
@@ -168,9 +169,47 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         return b.obterTopSearches();
     }
     
+    /**
+     * Método para obter o numero de pesquisas por barrel
+     *
+     * @return hasmap com o numero de pesquisas por barrel
+     */
+    @Override
+    public HashMap<Integer, Integer> getNPesquisas() throws RemoteException {
+        return this.nPesquisas;
+    }
     
+    /**
+     * Método para retornar o id do index.
+     * @return id do index
+     * @throws RemoteException se ocorrer um erro durante a execução de um método remoto
+     */
+    @Override
+    public int getId() throws RemoteException {
+        return id;
+    }
     
+    /**
+     * Método para retornar o barrel com o id especificado.
+     *
+     * @param id id do barrel
+     * @return barrel com o id especificado
+     */
+    public Barrel getBarrel(int id) {
+        for (Barrel barrel : barrelsThreads) {
+            if (barrel.getIdBarrel() == id) {
+                return barrel;
+            }
+        }
+        return null;
+    }
     
+    /**
+     * Método para verificar se um barrel está vivo.
+     *
+     * @return true se o barrel estiver vivo, false caso contrário
+     * @throws RemoteException se ocorrer um erro durante a execução de um método remoto
+     */
     @Override
     public boolean alive() throws RemoteException {
         int id = this.selecionarBarrel();
@@ -178,6 +217,11 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         return barrel != null;
     }
     
+    /**
+     * Método para selecionar um barrel.
+     *
+     * @return id do barrel selecionado
+     */
     @Override
     public int selecionarBarrel() {
         if (this.barrelsThreads.size() == 0) {
@@ -199,6 +243,14 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         return this.barrelsThreads.get(random).getIdBarrel();
     }
     
+    /**
+     * Método para tentar novamente a ligação aos barrels.
+     *
+     * @param rmiHost host do registo RMI
+     * @param rmiPort porta do registo RMI
+     * @param rmiRegister nome do registo RMI
+     * @throws RemoteException se ocorrer um erro durante a execução de um método remoto
+     */
     private void tentarNovamente(String rmiHost, int rmiPort, String rmiRegister) throws RemoteException {
         while (true) {
             try {
@@ -217,26 +269,10 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
                         this.barrel = null;
                     } catch (Exception ei) {
                         System.out.println("[EXCEPTION] Erro: " + ei);
-                        ei.printStackTrace();
                         return;
                     }
                 }
             }
         }
     }
-    
-    @Override
-    public int getId() throws RemoteException {
-        return id;
-    }
-    
-    public Barrel getBarrel(int id) {
-        for (Barrel barrel : barrelsThreads) {
-            if (barrel.getIdBarrel() == id) {
-                return barrel;
-            }
-        }
-        return null;
-    }
-    
 }

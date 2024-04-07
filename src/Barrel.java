@@ -133,7 +133,6 @@ public class Barrel extends Thread implements Serializable {
                 
             } catch (Exception e) {
                 System.out.println("[Erro no Barrel " + id + "] " + e);
-                e.printStackTrace();
             }
         }
     }

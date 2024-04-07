@@ -18,7 +18,6 @@ public class RMIClient extends UnicastRemoteObject {
     private final String rmiHost;
     private final int rmiPort;
     private final String rmiRegistryName;
-    private Client client;
     private RMIServerInterface serverInterface;
     
     public RMIClient(String rmiHost, int rmiPort, String rmiRegistryName) throws RemoteException, InterruptedException {
@@ -251,8 +250,6 @@ public class RMIClient extends UnicastRemoteObject {
                 
             } catch (Exception e) {
                 System.out.println("[EXCEPTION] Exceção na main: " + e);
-                System.out.println("adeus");
-                e.printStackTrace();
                 serverErrorHandling();
                 //System.exit(-1);
             }

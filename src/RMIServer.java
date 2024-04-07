@@ -27,7 +27,6 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     private RMIServerInterface hPrincipal;
     private HashMap<String, Integer> searchCounts = new HashMap<>();
     private HashMap<String, List<Long>> searchDurations = new HashMap<>();
-    HashMap<String, Client> clientes;
     private URLQueueInterface urlQueue;
     private RMIBarrelInterface barrel;
     private int barrelRMIPort;
@@ -38,7 +37,6 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     
     public RMIServer(int rmiPort, String rmiHost, String rmiRegistryName, String urlQueueRegistryName, int barrelRMIPort, String barrelRMIHost, String barrelRMIRegistryName) throws RemoteException {
         super();
-        this.clientes = new HashMap<>();
         this.barrelRMIPort = barrelRMIPort;
         this.barrelRMIHost = barrelRMIHost;
         this.barrelRMIRegistryName = barrelRMIRegistryName;
@@ -122,15 +120,6 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         }
     }
     
-    public boolean alive() throws RemoteException {
-        try {
-            return true;
-        } catch (Exception e) {
-            System.out.println("[EXCEPTION] " + e);
-            return false;
-        }
-    }
-    
     public void tentarNovamente(String rmiHost, int rmiPort, String rmiRegistryName) throws NotBoundException, RemoteException, InterruptedException {
         while (true) {
             try {
@@ -183,7 +172,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException ie) {
-                            ie.printStackTrace();
+                            System.out.println("[SERVER] Erro: " + ie);
                         }
                     }
                 }
@@ -207,6 +196,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         HashMap<String, ArrayList<String>> resp = new HashMap<>();
         HashMap<String, ArrayList<String>> aux = new HashMap<>();
         HashMap<Integer, Double> tempos = new HashMap<>();
+        
         for (String palavra : palavras) {
             boolean pesquisaRealizada = false;
             while (!pesquisaRealizada) {
@@ -231,17 +221,17 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
             }
         }
     
+        HashMap<Integer, Integer> nPesquisas = barrel.getNPesquisas();
         for (Integer id: tempos.keySet()) {
-            temposMedios.put(id, tempos.get(id) / palavras.length);
+            temposMedios.put(id, tempos.get(id) / nPesquisas.get(id));
         }
-    
+        
         for (String url : aux.keySet()) {
             if (resp.containsKey(url)) resp.get(url).addAll(aux.get(url));
             else resp.put(url, aux.get(url));
         }
         return resp;
     }
-    
     
     @Override
     public List<String> obterListaBarrels() throws RemoteException {

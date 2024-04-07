@@ -7,6 +7,9 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
 
+/**
+ * Interface URLQueueInterface que extende a interface Remote.
+ */
 public interface URLQueueInterface extends Remote {
     List<String> getUrlQueue() throws RemoteException;
     String inserirLink(String link) throws RemoteException;

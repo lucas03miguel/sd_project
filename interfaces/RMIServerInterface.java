@@ -8,8 +8,10 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+/**
+ * Interface RMIServerInterface que extende a interface Remote.
+ */
 public interface RMIServerInterface extends Remote {
     int checkLogin(String username, String password) throws RemoteException;
     String checkRegisto(String username, String password) throws RemoteException;
@@ -17,32 +19,5 @@ public interface RMIServerInterface extends Remote {
     List<String> obterListaBarrels() throws RemoteException;
     HashMap<String, Integer> getTopSearches() throws RemoteException;
     HashMap<String, ArrayList<String>> pesquisar(String s) throws RemoteException;
-    boolean alive() throws RemoteException;
     HashMap<Integer, Double> obterTempos() throws RemoteException;
-
-    
-    /*
-    boolean alive() throws RemoteException;
-    
-    boolean indexNewUrl(String url) throws RemoteException;
-    
-    boolean isLoggedIn(String username) throws RemoteException;
-    boolean logout(String username) throws RemoteException;
-    boolean isAdmin(String username) throws RemoteException;
-    
-    ArrayList<String> getTop10Searches() throws RemoteException;
-    
-    HashMap<String, ArrayList<String>> searchLinks(String phrase, int page) throws RemoteException;
-    ArrayList<String> linkPointers(String link) throws RemoteException;
-    
-    ArrayList<String> getLinksByRelevance(String link) throws RemoteException;
-    
-    ArrayList<String> getAliveBarrels() throws RemoteException;
-    ArrayList<String> getAliveCrawlers() throws RemoteException;
-    
-    void subscribe(RMIClientInterface rmiClientInterface) throws RemoteException;
-    //boolean ping() throws RemoteException;
-    void pesquisa(String a) throws RemoteException;
-    */
-    
 }

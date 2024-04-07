@@ -17,7 +17,10 @@ import java.text.Normalizer;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
-
+/**
+ * A classe Downloader representa um thread responsável por baixar e processar páginas web.
+ * Esta conecta-se a uma fila de URLs através de RMI e envia mensagens para os barris usando multicast.
+ */
 public class Downloader extends Thread implements Remote {
     //private final String multicastAddress;
     private final int multicastPort;
@@ -28,9 +31,17 @@ public class Downloader extends Thread implements Remote {
     private URLQueueInterface urlQueue;
     
     private final Semaphore sem;
-    //private final HashMap<String, HashSet<WebPage>> index = new HashMap<>();
-    //private final HashMap<String, HashSet<String>> links = new HashMap<>();
-    
+
+    /**
+     * Construtor da classe Downloader.
+     *
+     * @param id o ID do downloader
+     * @param multPort a porta multicast
+     * @param multAddress o endereço multicast
+     * @param URLQueueName o nome da fila de URLs no registro RMI
+     * @param sem o semáforo para sincronização
+     * @throws Exception se ocorrer um erro durante a inicialização
+     */
     
     public Downloader(int id, int multPort, String multAddress, String URLQueueName, Semaphore sem) throws Exception {
         this.sem = sem;
@@ -74,7 +85,11 @@ public class Downloader extends Thread implements Remote {
         //start();
         */
     }
-    
+
+     /**
+     * Método executado pelo thread do downloader.
+     * Processa as URLs da fila de forma contínua.
+     */
     public void run() {
         while (true) {
             try {
@@ -109,7 +124,11 @@ public class Downloader extends Thread implements Remote {
             }
         }
     }
-    
+    /**
+     * Método principal para iniciar os downloaders.
+     *
+     * @param args os argumentos de linha de comando (não utilizados)
+     */
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
         Properties prop = new Properties();
@@ -160,17 +179,35 @@ public class Downloader extends Thread implements Remote {
         }
     }
     */
-    
+
+    /**
+     * Extrai o título da página web.
+     *
+     * @param doc o documento Jsoup da página web
+     * @return o título da página web
+     */
     private String extrairTitulo(Document doc) {
         String title = doc.title();
         return title != null ? title : "Sem titulo";
     }
     
+    /**
+     * Extrai uma citação da página web.
+     *
+     * @param doc o documento Jsoup da página web
+     * @return a citação da página web
+     */
     private String extrairCitacao(Document doc) {
         Elements paragraphs = doc.select("p");
         return !paragraphs.isEmpty() ? paragraphs.first().text() : "";
     }
     
+    /**
+     * Extrai as palavras da página web.
+     *
+     * @param doc o documento Jsoup da página web
+     * @return um conjunto de palavras da página web
+     */
     private Set<String> extrairPalavras(Document doc) {
         HashSet<String> words = new HashSet<>();
         String text = doc.text();
@@ -208,6 +245,11 @@ public class Downloader extends Thread implements Remote {
     
      */
     
+     /**
+     * Processa uma URL, extraindo informações da página web e enviando para os barris.
+     *
+     * @param url a URL a ser processada
+     */
     private void processarURL(String url) {
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             url = "https://".concat(url);
@@ -264,6 +306,12 @@ public class Downloader extends Thread implements Remote {
         }
     }
     
+    /**
+     * Envia as informações da página web para os barris.
+     *
+     * @param webPage a página web processada
+     * @param links os links encontrados na página web
+     */
     private void enviarParaBarrels(WebPage webPage, ArrayList<String> links) {
         Set<String> listaPalavras = webPage.getWords();
         String url = webPage.getUrl();
@@ -318,6 +366,11 @@ public class Downloader extends Thread implements Remote {
     
      */
     
+    /**
+     * Envia uma mensagem para os barris usando multicast.
+     *
+     * @param message a mensagem a ser enviada
+     */
     private void sendMessage(String message) {
         try {
             this.sem.acquire();
@@ -336,23 +389,42 @@ public class Downloader extends Thread implements Remote {
         }
     }
     
+    /**
+    * Limpa os recursos utilizados pelo downloader.
+    */
     public void cleanup() {
         if (this.socket != null && !this.socket.isClosed()) {
             this.socket.close();
         }
     }
     
+    /**
+     * Obtém a fila de URLs.
+     *
+     * @return a fila de URLs como uma string
+     */
     public String getUrlQueue() {
         return urlQueue.toString();
     }
 }
 
+/**
+ * A classe WebPage representa uma página web com informações como URL, título, citação e palavras.
+ */
 class WebPage {
     private String url;
     private String title;
     private String textSnippet;
     private Set<String> words;
     
+    /**
+     * Construtor da classe WebPage.
+     *
+     * @param url a URL da página web
+     * @param title o título da página web
+     * @param textSnippet a citação da página web
+     * @param words as palavras da página web
+     */
     public WebPage(String url, String title, String textSnippet, Set<String> words) {
         this.url = url.replaceAll("[\n;|]+", "");
         this.title = title.replaceAll("[\n;|]+", "");
@@ -365,6 +437,9 @@ class WebPage {
         this.words = wordsCopy;
     }
     
+    /**
+     * Construtor padrão da classe WebPage.
+     */
     public WebPage() {
         this.url = "";
         this.title = "";
@@ -372,38 +447,75 @@ class WebPage {
         this.words = new HashSet<>();
     }
     
+    /**
+     * Obtém a URL da página web.
+     *
+     * @return a URL da página web
+     */
     public String getUrl() {
         return url;
     }
     
+    /**
+     * Define a URL da página web.
+     *
+     * @param url a URL da página web
+     */
     public void setUrl(String url) {
         this.url = url;
     }
     
+    /**
+     * Obtém o título da página web.
+     *
+     * @return o título da página web
+     */
     public String getTitle() {
         return title;
     }
     
+    /**
+     * Define o título da página web.
+     *
+     * @param title o título da página web
+     */
     public void setTitle(String title) {
         this.title = title;
     }
     
+    /**
+     * Obtém a citação da página web.
+     *
+     * @return a citação da página web
+     */
     public String getTextSnippet() {
         return textSnippet;
     }
     
+    /**
+     * Define a citação da página web.
+     *
+     * @param textSnippet a citação da página web
+     */
     public void setTextSnippet(String textSnippet) {
         this.textSnippet = textSnippet;
     }
     
+    /**
+     * Obtém as palavras da página web.
+     *
+     * @return as palavras da página web
+     */
     public Set<String> getWords() {
         return words;
     }
     
+    /**
+     * Define as palavras da página web.
+     *
+     * @param words as palavras da página web
+     */
     public void setWords(Set<String> words) {
         this.words = words;
     }
 }
-
-
-

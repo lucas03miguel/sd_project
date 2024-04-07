@@ -14,6 +14,7 @@ public interface RMIServerInterface extends Remote {
     HashMap<String, Integer> getTopSearches() throws RemoteException;
     HashMap<String, Double> getAverageSearchTime() throws RemoteException;
     
+    List<String> getDownloadersList() throws RemoteException;
     HashMap<String, ArrayList<String>> pesquisar(String s) throws RemoteException;
     boolean alive() throws RemoteException;
     

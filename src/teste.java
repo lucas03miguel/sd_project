@@ -1,3 +1,6 @@
+/**
+ * @author Lucas e Simão
+ */
 package src;
 
 import java.net.MalformedURLException;

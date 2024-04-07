@@ -1,3 +1,6 @@
+/**
+ * @author Lucas e Simão
+ */
 package interfaces;
 
 import src.Barrel;

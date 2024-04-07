@@ -21,4 +21,5 @@ public interface RMIServerInterface extends Remote {
     List<String> obterListaBarrels() throws RemoteException;
     HashMap<String, ArrayList<String>> pesquisar(String s) throws RemoteException;
     HashMap<Integer, Double> obterTempos() throws RemoteException;
+    ArrayList<String> obterLigacoes(String link) throws RemoteException;
 }

@@ -5,12 +5,17 @@ package src;
 
 import interfaces.RMIServerInterface;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
 import static java.lang.Thread.sleep;
 
 /**
@@ -180,7 +185,7 @@ public class RMIClient extends UnicastRemoteObject {
                                 System.out.print("Pesquisa inválida (1+ carateres): ");
                                 searchQuery = br.readLine();
                             }
-                            HashMap<String, ArrayList<String>> resp = new HashMap<>();
+                            HashMap<String, ArrayList<String>> resp;
                             try {
                                 resp = serverInterface.pesquisar(searchQuery);
                             } catch (RemoteException e) {
@@ -196,21 +201,39 @@ public class RMIClient extends UnicastRemoteObject {
                                 int i = 0;
                                 int tamanho = resp.size();
                                 for (String link : resp.keySet()) {
+                                    i++;
+                                    int id = i%10;
+                                    if (i%10 == 0) id = 10;
+                                    System.out.println("------- Link " + id + " -------");
                                     System.out.println("Link: " + link);
                                     System.out.println("Title: " + resp.get(link).toArray()[0]);
                                     System.out.println("Text: " + resp.get(link).toArray()[1]);
-                                    System.out.println();
-                                    i++;
+                                    System.out.println("------------------------------\n");
                                     if (i%10 == 0 && tamanho > 10) {
-                                        System.out.print("Deseja ver mais URLs? (s/n): ");
-                                        String escolha = br.readLine();
-                                        while (!escolha.equalsIgnoreCase("s") && !escolha.equalsIgnoreCase("n")) {
-                                            System.out.print("Escolha inválida. Deseja ver mais URLs? (s/n): ");
-                                            escolha = br.readLine();
+                                        boolean flag;
+                                        while (true) {
+                                            System.out.println("Deseja ver mais URLs? (s/n)\nDeseja ver as ligações de uma página? (1-10)");
+                                            String escolha = br.readLine();
+                                            while (!escolha.equalsIgnoreCase("s") && !escolha.equalsIgnoreCase("n") && !escolha.matches("[1-9]|10")) {
+                                                System.out.println("Escolha inválida. Deseja ver mais URLs? (s/n)\nDeseja ver as ligações de uma página? (1-10)");
+                                                escolha = br.readLine();
+                                            }
+                                            if (escolha.equalsIgnoreCase("n")) {
+                                                flag = true;
+                                                break;
+                                            } else if (escolha.matches("[1-9]|10")) {
+                                                int num = Integer.parseInt(escolha);
+                                                System.out.println("Ligações da página " + num + ":");
+                                                ArrayList<String> links = serverInterface.obterLigacoes((String) resp.keySet().toArray()[num - 1]);
+                                                for (String l : links) {
+                                                    System.out.println(l);
+                                                }
+                                            } else if (escolha.equalsIgnoreCase("s")) {
+                                                flag = false;
+                                                break;
+                                            }
                                         }
-                                        if (escolha.equalsIgnoreCase("n")) {
-                                            break;
-                                        }
+                                        if (flag) break;
                                     }
                                 }
                             }

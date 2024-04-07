@@ -13,11 +13,12 @@ import java.util.List;
  * Interface RMIServerInterface que extende a interface Remote.
  */
 public interface RMIServerInterface extends Remote {
+    HashMap<String, Integer> obterTopSearches() throws RemoteException;
+    
     int checkLogin(String username, String password) throws RemoteException;
     String checkRegisto(String username, String password) throws RemoteException;
     String indexar(String url) throws RemoteException;
     List<String> obterListaBarrels() throws RemoteException;
-    HashMap<String, Integer> getTopSearches() throws RemoteException;
     HashMap<String, ArrayList<String>> pesquisar(String s) throws RemoteException;
     HashMap<Integer, Double> obterTempos() throws RemoteException;
 }

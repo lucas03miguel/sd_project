@@ -8,41 +8,89 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
+/**
+ * A classe Barrel é responsável por porcessar e guardar as informações dos sites.
+ */
 public class Barrel extends Thread implements Serializable {
+    /**
+     * id do Barrel
+     */
     private final int id;
+    /**
+     * número de pesquisas feitas
+     */
     private int nPesquisas;
-    private final int multicastPort;
-    private final String multicastAddress;
-    private MulticastSocket socket;
-    private InetAddress group;
-    private HashMap<Integer, Integer> pesquisas;
-    private HashMap<String, HashSet<String>> index; //chave: palavra, valor: conjunto de urls
-    private HashMap<String, HashSet<String>> links; //chave: url, valor: conjunto de urls
-    private HashMap<String, ArrayList<String>> webInfo; //chave: url, valor: snippet de texto
-    private HashMap<String, Integer> searchs; //chave: pesquisa, valor: número de vezes que foi pesquisada
-    private final String linksFilename; //nome do arquivo que guarda os links
-    private final String wordsFilename; //nome do arquivo que guarda as palavras
-    private final String textSnippetFilename; //nome do arquivo que guarda os snippets de texto
-    private final String searchsFilename; //nome do arquivo que guarda as pesquisas
+    /**
+     * socket para comunicação
+     */
+    private final MulticastSocket socket;
+    /**
+     * HashMap que guarda o número de pesquisas feitas por cada Barrel
+     */
+    private final HashMap<Integer, Integer> pesquisas;
+    /**
+     * HashMap que guarda as palavras e os urls onde elas aparecem
+     */
+    private final HashMap<String, HashSet<String>> index; //chave: palavra, valor: conjunto de urls
+    /**
+     * HashMap que guarda os links e os urls que apontam para eles
+     */
+    private final HashMap<String, HashSet<String>> links; //chave: url, valor: conjunto de urls
+    /**
+     * HashMap que guarda as citacoes de texto dos sites
+     */
+    private final HashMap<String, ArrayList<String>> webInfo; //chave: url, valor: snippet de texto
+    /**
+     * HashMap que guarda as pesquisas feitas
+     */
+    private final HashMap<String, Integer> searchs; //chave: pesquisa, valor: número de vezes que foi pesquisada
+    /**
+     * Ficheiro que guarda os links
+     */
     private final File linksFile; //arquivo que guarda os links
+    /**
+     * Ficheiro que guarda as palavras
+     */
     private final File wordsFile; //arquivo que guarda as palavras
+    /**
+     * Ficheiro que guarda as citacoes
+     */
     private final File textSnippetFile; //arquivo que guarda os snippets de texto
+    /**
+     * Ficheiro que guarda as pesquisas
+     */
     private final File searchsFile; //arquivo que guarda as pesquisas
+    /**
+     * Semáforo para controlar o acesso ao ficheiro das palavras
+     */
     private final Semaphore semUpdateWords;
+    /**
+     * Semáforo para controlar o acesso ao ficheiro dos links
+     */
     private final Semaphore semUpdateLinks;
+    /**
+     * Semáforo para controlar o acesso ao ficheiro das informações
+     */
     private final Semaphore semUpdateInfo;
+    /**
+     * Semáforo para controlar o acesso ao ficheiro das pesquisas
+     */
     private final Semaphore semSearch;
-    private final Semaphore sem;
     
+    /**
+     * Construtor da classe Barrel
+     * @param id id do Barrel
+     * @param multicastPort porta para comunicação
+     * @param multicastAddress endereço para comunicação
+     * @throws IOException exceção de IO
+     */
     public Barrel(int id, int multicastPort, String multicastAddress) throws IOException {
         super();
         this.id = id;
         this.nPesquisas = 0;
-        
-        this.multicastPort = multicastPort;
-        this.multicastAddress = multicastAddress;
+    
         this.socket = new MulticastSocket(multicastPort);
-        this.group = InetAddress.getByName(multicastAddress);
+        InetAddress group = InetAddress.getByName(multicastAddress);
         this.socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkInterface.getByIndex(0));
         this.links = new HashMap<>();
         this.index = new HashMap<>();
@@ -50,10 +98,10 @@ public class Barrel extends Thread implements Serializable {
         this.searchs = new HashMap<>();
         this.pesquisas = new HashMap<>();
         
-        this.linksFilename = "./database/links.txt";
-        this.wordsFilename = "./database/words.txt";
-        this.textSnippetFilename = "./database/info.txt";
-        this.searchsFilename = "./database/searchs.txt";
+        String linksFilename = "./database/links.txt"; //nome do arquivo que guarda os links
+        String wordsFilename = "./database/words.txt"; //nome do arquivo que guarda as palavras
+        String textSnippetFilename = "./database/info.txt"; //nome do arquivo que guarda os snippets de texto
+        String searchsFilename = "./database/searchs.txt"; //nome do arquivo que guarda as pesquisas
         
         this.linksFile = new File(linksFilename);
         this.wordsFile = new File(wordsFilename);
@@ -64,25 +112,21 @@ public class Barrel extends Thread implements Serializable {
         this.semUpdateLinks = new Semaphore(1);
         this.semUpdateInfo = new Semaphore(1);
         this.semSearch = new Semaphore(1);
-        this.sem = new Semaphore(1);
         System.out.println("BARREL " + id + " INICIALIZADO COM SUCESSO");
     }
     
+    /**
+     * Método run da thread dos Barrel
+     */
     public void run() {
         while (true) {
             try {
-                //HashMap<String, HashSet<String>> auxLinks = new HashMap<>();
-                //HashMap<String, HashSet<String>> auxWords = new HashMap<>();
-                //ArrayList<String> auxInfo = new ArrayList<>();
-                
-                
                 byte[] buffer = new byte[32 * 1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 System.out.println("Barrel " + id + " esperando mensagem...");
                 
                 this.socket.receive(packet);
                 String message = new String(packet.getData(), 0, packet.getLength());
-                //System.out.println("Barrel " + id + " recebeu mensagem: " + message);
                 
                 String[] list = message.split("; ");
                 String type = list[0].split(" \\| ")[1];
@@ -90,8 +134,6 @@ public class Barrel extends Thread implements Serializable {
                 
                 
                 System.out.println("Guardei o url " + url);
-                //System.out.println("type: " + type + " count: " + count);
-                //System.out.println(Arrays.toString(list) + "\n");
                 switch (type) {
                     case "links" -> {
                         int count = Integer.parseInt(list[2].split(" \\| ")[1]);
@@ -124,9 +166,6 @@ public class Barrel extends Thread implements Serializable {
                             aux.add(texto);
                             this.webInfo.put(url, aux);
                         }
-                        //System.out.println("titulo: " + titulo);
-                        //System.out.println("chave: " + texto);
-                        
                         updateInfo();
                     }
                 }
@@ -137,40 +176,12 @@ public class Barrel extends Thread implements Serializable {
         }
     }
     
+    /**
+     * Método que atualiza as palavras
+     */
     private void updateWords() {
         try {
             criarFicheiros();
-            /*
-            if (!linksFile.exists()) {
-                linksFile.createNewFile();
-            }
-            if (!wordsFile.exists()) {
-                wordsFile.createNewFile();
-            }
-            if (!textSnippetFile.exists()) {
-                textSnippetFile.createNewFile();
-            }
-            
-            // Ler o conteúdo atual do arquivo de palavras
-            HashMap<String, HashSet<String>> currentIndex = new HashMap<>();
-            BufferedReader reader = new BufferedReader(new FileReader(wordsFile));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(" \\| ");
-                String word = parts[0];
-                HashSet<String> urls = new HashSet<>(Arrays.asList(Arrays.copyOfRange(parts, 1, parts.length)));
-                currentIndex.put(word, urls);
-            }
-            reader.close();
-            
-            // Atualizar o índice atual com as novas palavras e URLs
-            for (String word : index.keySet()) {
-                if (!this.index.containsKey(word)) {
-                    this..put(word, new HashSet<>());
-                }
-                currentIndex.get(word).addAll(index.get(word));
-            }
-            */
     
             this.semUpdateWords.acquire();
             FileWriter writer = new FileWriter(wordsFile);
@@ -188,6 +199,9 @@ public class Barrel extends Thread implements Serializable {
         }
     }
     
+    /**
+     * Método que atualiza os links
+     */
     private void updateLinks() {
         try {
             criarFicheiros();
@@ -208,6 +222,9 @@ public class Barrel extends Thread implements Serializable {
         }
     }
     
+    /**
+     * Método que atualiza as informações dos sites
+     */
     private void updateInfo() {
         try {
             criarFicheiros();
@@ -225,44 +242,12 @@ public class Barrel extends Thread implements Serializable {
             System.out.println("[EXCEPTION] Erro a atualizar o ficheiro das informacoes: " + e);
         }
     }
-    /*
-    private void guardarLinks() {
-        try (BufferedReader fr = new BufferedReader(new FileReader(linksFile))){
-            String line;
-            while ((line = fr.readLine()) != null) {
-                String[] parts = line.split(" \\| ");
-                
-                String url = parts[0];
-                if (!this.links.containsKey(url))
-                    this.links.put(url, new HashSet<>());
-                this.links.get(url).add(url);
-            }
-        } catch (Exception e) {
-            System.out.println("[EXCEPTION] Erro ao ler do ficheiro dos links: " + e);
-        }
-    }
     
-    private void guardarPalavras() {
-        try (BufferedReader fr = new BufferedReader(new FileReader(wordsFile))) {
-            String line;
-            while ((line = fr.readLine()) != null) {
-                String[] parts = line.split(" \\| ");
-                String word = parts[0];
-                if (!this.index.containsKey(word))
-                    this.index.put(word, new HashSet<>());
-                this.index.get(word).add(url);
-            }
-        } catch (Exception e) {
-            System.out.println("[EXCEPTION] Erro ao ler do ficheiro das palavras: " + e);
-        }
-    }
-    
-    private void guardarInfo() {
-    
-    }
-    */
-    
-    
+    /**
+     * Método que obtem os links da base de dados
+     * @param palavra palavra a pesquisar
+     * @return HashMap com os links
+     */
     public HashMap<String, ArrayList<String>> obterLinks(String palavra) {
         System.out.println("Pesquisando links com a palavra: " + palavra);
         ArrayList<String> urls = new ArrayList<>();
@@ -279,10 +264,10 @@ public class Barrel extends Thread implements Serializable {
     
             for (String search : this.searchs.keySet())
                 fw.write(search + " " + this.searchs.get(search) + "\n");
-            fw.close();
             this.semSearch.release();
+            fw.close();
             
-            this.sem.acquire();
+            this.semUpdateWords.acquire();
             BufferedReader fr = new BufferedReader(new FileReader(wordsFile));
             String line;
             while ((line = fr.readLine()) != null) {
@@ -291,8 +276,10 @@ public class Barrel extends Thread implements Serializable {
                     urls.addAll(Arrays.asList(parts).subList(1, parts.length));
                 }
             }
+            this.semUpdateWords.release();
             fr.close();
             
+            this.semUpdateInfo.acquire();
             fr = new BufferedReader(new FileReader(textSnippetFile));
             while ((line = fr.readLine()) != null) {
                 String[] parts = line.split(" \\| ");
@@ -302,8 +289,10 @@ public class Barrel extends Thread implements Serializable {
                     resp.get(parts[0]).add(parts[2]);
                 }
             }
+            this.semUpdateInfo.release();
             fr.close();
             
+            this.semUpdateLinks.acquire();
             fr = new BufferedReader(new FileReader(linksFile));
             while ((line = fr.readLine()) != null) {
                 String[] parts = line.split(" \\| ");
@@ -311,21 +300,18 @@ public class Barrel extends Thread implements Serializable {
                     resp.get(parts[0]).add(String.valueOf(parts.length - 1));
                 }
             }
+            this.semUpdateLinks.release();
             
             for (String link : resp.keySet()) {
                 if (resp.get(link).size() == 2)
                     resp.get(link).add("0");
             }
-            
             fr.close();
-            //long endTime = System.currentTimeMillis();
-            //long time = endTime - startTime;
+            
             this.nPesquisas++;
-    
             pesquisas.put(id, nPesquisas);
-            this.sem.release();
+    
         } catch (Exception e) {
-            this.sem.release();
             System.out.println("[EXCEPTION] " + e);
             HashMap<String, ArrayList<String>> error = new HashMap<>();
             error.put("Erro", new ArrayList<>());
@@ -338,17 +324,12 @@ public class Barrel extends Thread implements Serializable {
             error.put("Nenhum", new ArrayList<>());
             return error;
         }
-        //System.out.println("oiiii " + resp);
     
         HashMap<String, Integer> linksRelevance = new HashMap<>();
         for(String link: resp.keySet()){
-            //System.out.println("aaaaaaa");
-            //System.out.println(resp.get(link));
-            //System.out.println();
             int relevancia = Integer.parseInt(resp.get(link).get(2));
             linksRelevance.put(link, relevancia);
         }
-        //System.out.println("oooooooooooooooo" + linksRelevance);
         
         List<String> sortedKeys = new ArrayList<>(resp.keySet());
         sortedKeys.sort((a, b) -> linksRelevance.get(b) - linksRelevance.get(a));
@@ -357,33 +338,14 @@ public class Barrel extends Thread implements Serializable {
         for (String key : sortedKeys) {
             sortedLinks.put(key, resp.get(key));
         }
-        /*
-        System.out.println(sortedLinks);
-        
-        ArrayList<Map.Entry<String, ArrayList<String>>> list = new ArrayList<>(resp.entrySet());
-    
-        for (int i = 0; i < list.size() - 1; i++) {
-            for (int j = 0; j < list.size() - 1 - i; j++) {
-                int a = Integer.parseInt(list.get(j).getValue().get(2));
-                System.out.println("aaaaaaaaaaaaaaa "+ a);
-                if (a < Integer.parseInt(list.get(j + 1).getValue().get(2))) {
-                    Map.Entry<String, ArrayList<String>> temp = list.get(j);
-                    list.set(j, list.get(j + 1));
-                    list.set(j + 1, temp);
-                }
-            }
-        }
-        
-        HashMap<String, ArrayList<String>> sortedMap = new HashMap<>();
-        for (Map.Entry<String, ArrayList<String>> entry : list) {
-            sortedMap.put(entry.getKey(), entry.getValue());
-        }
-        */
         
         return sortedLinks;
     }
     
-    private boolean obterPesquisas() {
+    /**
+     * Método que obtem da base de dados as pesquisas feitas
+     */
+    private void obterPesquisas() {
         try {
             this.semSearch.acquire();
             BufferedReader fr = new BufferedReader(new FileReader(searchsFile));
@@ -394,14 +356,16 @@ public class Barrel extends Thread implements Serializable {
             }
             fr.close();
             this.semSearch.release();
-            return true;
         } catch (Exception e) {
             this.semSearch.release();
             System.out.println("[EXCEPTION] Erro ao obter as pesquisas: " + e);
-            return false;
         }
     }
     
+    /**
+     * Método que retorna as top pesquisas feitas
+     * @return top 10 pesquisas
+     */
     public HashMap<String, Integer> obterTopSearches() {
         try {
             obterPesquisas();
@@ -424,6 +388,9 @@ public class Barrel extends Thread implements Serializable {
         }
     }
     
+    /**
+     * Método que cria os ficheiros necessários
+     */
     private void criarFicheiros() {
         boolean __ = false;
         try {
@@ -439,15 +406,23 @@ public class Barrel extends Thread implements Serializable {
             if (!searchsFile.exists()) {
                 __ = searchsFile.createNewFile();
             }
-            //System.out.println(__);
         } catch (Exception e) {
             System.out.println("[EXCEPTION] Erro ao criar os ficheiros: " + e);
         }
     }
     
+    /**
+     * Método que retorna o id do Barrel
+     * @return id do Barrel
+     */
     public int getIdBarrel() {
         return this.id;
     }
+    
+    /**
+     * Método que retorna o número de pesquisas feitas
+     * @return número de pesquisas
+     */
     public HashMap<Integer, Integer> getNPesquisas() {
         return this.pesquisas;
     }

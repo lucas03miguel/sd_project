@@ -18,29 +18,63 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
 import static java.lang.Thread.sleep;
 
+/**
+ * A classe RMIServer representa um servidor RMI que permite indexar URLs e pesquisar links.
+ * Implementa a interface RMIServerInterface.
+ */
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
+    /**
+     * Nome do registo da queue de url
+     */
     private final String urlName;
-    private RMIServerInterface hPrincipal;
-    private HashMap<String, Integer> searchCounts = new HashMap<>();
-    private HashMap<String, List<Long>> searchDurations = new HashMap<>();
+    /**
+     * Interface da queue de url
+     */
     private URLQueueInterface urlQueue;
+    /**
+     * Interface do barrel
+     */
     private RMIBarrelInterface barrel;
-    private int barrelRMIPort;
-    private String barrelRMIHost;
-    private String barrelRMIRegistryName;
+    /**
+     * Porta do registo RMI do barrel
+     */
+    private final int barrelRMIPort;
+    /**
+     * Host do registo RMI do barrel
+     */
+    private final String barrelRMIHost;
+    /**
+     * Nome do registo RMI do barrel
+     */
+    private final String barrelRMIRegistryName;
+    /**
+     * HasMap com os tempos médios de pesquisa
+     */
     HashMap<Integer, Double> temposMedios;
     
-    
+    /**
+     * Construtor da classe RMIServer.
+     *
+     * @param rmiPort porta do registo RMI
+     * @param rmiHost host do registo RMI
+     * @param rmiRegistryName nome do registo RMI
+     * @param urlQueueRegistryName nome do registo RMI da queue de url
+     * @param barrelRMIPort porta do registo RMI do barrel
+     * @param barrelRMIHost host do registo RMI do barrel
+     * @param barrelRMIRegistryName nome do registo RMI do barrel
+     * @throws RemoteException se ocorrer um erro durante a criação do objeto remoto
+     */
     public RMIServer(int rmiPort, String rmiHost, String rmiRegistryName, String urlQueueRegistryName, int barrelRMIPort, String barrelRMIHost, String barrelRMIRegistryName) throws RemoteException {
         super();
         this.barrelRMIPort = barrelRMIPort;
         this.barrelRMIHost = barrelRMIHost;
         this.barrelRMIRegistryName = barrelRMIRegistryName;
-        this.hPrincipal = null;
         this.temposMedios = new HashMap<>();
         this.urlName = urlQueueRegistryName;
         
@@ -51,7 +85,6 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                 r.rebind(rmiRegistryName, this);
                 System.out.println("[SERVER] A correr em " + rmiHost + ":" + rmiPort + "->" + rmiRegistryName);
                 
-                //meter cena dos barrels e tals
                 while (true) {
                     try {
                         this.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(barrelRMIHost, barrelRMIPort).lookup(barrelRMIRegistryName);
@@ -64,7 +97,6 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                         System.out.println("[EXCEPTION] NotBoundException | RemoteException, could not get barrel Registry: " + e1.getMessage());
                         System.out.println("Current barrel config: " + barrelRMIHost + ":" + barrelRMIPort + " " + barrelRMIRegistryName);
                         
-                        // Aguarda um segundo antes de tentar novamente
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException e2) {
@@ -72,7 +104,6 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                         }
                     }
                 }
-                
                 run();
             } catch (Exception e) {
                 System.out.println("[EXCEPTION] Nao conseguiu criar registry. A tentar novamente num segundo...");
@@ -84,22 +115,30 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                     System.out.println("[EXCEPTION] " + e2);
                     return;
                 } catch (RemoteException ex) {
-                    System.out.println("[EXCEPTION] RemoteException, could not create registry. Retrying in 1 second...");
+                    System.out.println("[EXCEPTION] Nao conseguiu criar registry. A tentar novamente num segundo...");
                 }
             }
         }
         
     }
+    
+    /**
+     * Método para correr o servidor.
+     */
     public void run() {
         try {
             System.out.println("[SERVER] Server preparado.");
             while (true) ;
         } catch (Exception re) {
-            System.out.println("Exception in RMIServer.main: " + re);
-            
+            System.out.println("[SERVER] Erro: " + re);
         }
     }
     
+    /**
+     * Método principal para inicializar o servidor RMI.
+     *
+     * @param args argumentos de linha de comando (não utilizado)
+     */
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
         Properties prop = new Properties();
@@ -120,30 +159,12 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         }
     }
     
-    public void tentarNovamente(String rmiHost, int rmiPort, String rmiRegistryName) throws NotBoundException, RemoteException, InterruptedException {
-        while (true) {
-            try {
-                if (this.barrel.alive()) {
-                    System.out.println("[BARREL] Barrel is alive.");
-                }
-            } catch (Exception e) {
-                System.out.println("[SERVER] Getting connection...");
-                
-                try {
-                    Thread.sleep(1000);
-                    this.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
-                    break;
-                } catch (InterruptedException | NotBoundException ei) {
-                    System.out.println("[EXCEPTION] InterruptedException: " + ei);
-                    return;
-                } catch (Exception er) {
-                    System.out.println("[EXCEPTION] RemoteException, could not create registry. Retrying in 1 second...");
-                    this.hPrincipal = null;
-                }
-            }
-        }
-    }
-    
+    /**
+     * Método para indexar um URL.
+     * @param url URL a indexar
+     * @return mensagem de sucesso ou erro
+     * @throws RemoteException se ocorrer um erro durante a conexão remota
+     */
     @Override
     public String indexar(String url) throws RemoteException {
         System.out.println("[SERVER] Adicionando url à queue: " + url);
@@ -183,12 +204,12 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         return res;
     }
     
-    
-    @Override
-    public HashMap<Integer, Double> obterTempos() throws RemoteException {
-        return this.temposMedios;
-    }
-    
+    /**
+     * Método para pesquisar links.
+     * @param s string de pesquisa
+     * @return HashMap com os links pesquisados
+     * @throws RemoteException se ocorrer um erro durante a conexão remota
+     */
     @Override
     public HashMap<String, ArrayList<String>> pesquisar(String s) throws RemoteException {
         String[] palavras = s.split(" ");
@@ -220,7 +241,6 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                 }
             }
         }
-    
         HashMap<Integer, Integer> nPesquisas = barrel.getNPesquisas();
         for (Integer id: tempos.keySet()) {
             temposMedios.put(id, tempos.get(id) / nPesquisas.get(id));
@@ -233,38 +253,15 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         return resp;
     }
     
-    @Override
-    public List<String> obterListaBarrels() throws RemoteException {
-        return barrel.obterListaBarrels();
-    }
-
-    @Override
-    public HashMap<String, Integer> getTopSearches() throws RemoteException {
-        int id = barrel.selecionarBarrel();
-        return this.barrel.obterTopSearches(id);
-    }
-    
+    /**
+     * Método para verificar o login de um utilizador.
+     * @param username nome de utilizador
+     * @param password palavra-passe
+     * @return 0 se o login for inválido, 1 se o username for inválido, 2 se o login for válido, -1 se for erro
+     * @throws RemoteException se ocorrer um erro durante a conexão remota
+     */
     public int checkLogin(String username, String password) throws RemoteException {
         //TODO: Modificar esta shit porque nao esta bem. temos que usar o fucking barril
-        /*
-        ArrayList<String> res = new ArrayList<>(Arrays.asList("true", "false", "Login successful"));
-        //-------------------------------------------------
-        System.out.println("[SERVER] Login status: " + res);
-
-        String message = res.get(2);
-
-        if (res.get(0).equals("failure")) {
-            // login unsuccessful and not admin
-            return new ArrayList<>(Arrays.asList("false", "false", message));
-        }
-        String pass = res.get(1);
-        
-        Client c = new Client(username, pass);
-        this.updateClient(username, c);
-
-        // login successful and not admin
-        return new ArrayList<>(Arrays.asList("true", pass, message));
-        */
         int validLogins = 0;
         String filePath = "./database/users.txt";
         
@@ -310,7 +307,13 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         return validLogins;
     }
     
-    
+    /**
+     * Método para verificar o registo de um utilizador.
+     * @param username nome de utilizador
+     * @param password palavra-passe
+     * @return mensagem de sucesso ou erro
+     * @throws RemoteException se ocorrer um erro durante a conexão remota
+     */
     public String checkRegisto(String username, String password) throws RemoteException {
         String filePath = "./database/users.txt";
         
@@ -325,5 +328,69 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         }
         
         return "User adicionado com sucesso";
+    }
+    
+    /**
+     * Método para obter a lista de barrels.
+     * @return lista de barrels
+     * @throws RemoteException se ocorrer um erro durante a conexão remota
+     */
+    @Override
+    public List<String> obterListaBarrels() throws RemoteException {
+        return barrel.obterListaBarrels();
+    }
+    
+    /**
+     * Método para obter as top searches.
+     * @return HashMap com as top searches
+     * @throws RemoteException se ocorrer um erro durante a conexão remota
+     */
+    @Override
+    public HashMap<String, Integer> obterTopSearches() throws RemoteException {
+        int id = barrel.selecionarBarrel();
+        return this.barrel.obterTopSearches(id);
+    }
+    
+    /**
+     * Método para obter os tempos médios de pesquisa.
+     * @return HashMap com os tempos médios de pesquisa
+     * @throws RemoteException se ocorrer um erro durante a conexão remota
+     */
+    @Override
+    public HashMap<Integer, Double> obterTempos() throws RemoteException {
+        return this.temposMedios;
+    }
+    
+    /**
+     * Método para tentar reconectar ao barrel.
+     *
+     * @param rmiHost host do registo RMI do barrel
+     * @param rmiPort porta do registo RMI do barrel
+     * @param rmiRegistryName nome do registo RMI do barrel
+     * @throws NotBoundException se o nome especificado não estiver associado a um objeto remoto
+     * @throws RemoteException se ocorrer um erro durante a conexão remota
+     * @throws InterruptedException se a thread for interrompida enquanto estiver dormindo
+     */
+    public void tentarNovamente(String rmiHost, int rmiPort, String rmiRegistryName) throws NotBoundException, RemoteException, InterruptedException {
+        while (true) {
+            try {
+                if (this.barrel.alive()) {
+                    System.out.println("[BARREL] Barrel is alive.");
+                }
+            } catch (Exception e) {
+                System.out.println("[SERVER] Getting connection...");
+                
+                try {
+                    Thread.sleep(1000);
+                    this.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
+                    break;
+                } catch (InterruptedException | NotBoundException ei) {
+                    System.out.println("[EXCEPTION] InterruptedException: " + ei);
+                    return;
+                } catch (Exception er) {
+                    System.out.println("[EXCEPTION] RemoteException, could not create registry. Retrying in 1 second...");
+                }
+            }
+        }
     }
 }

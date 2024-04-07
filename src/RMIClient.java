@@ -223,7 +223,7 @@ public class RMIClient extends UnicastRemoteObject {
                         case "5" -> {
                             System.out.println("<----Top 10 pesquisas---->");
                             try {
-                                HashMap<String, Integer> topSearches = serverInterface.getTopSearches();
+                                HashMap<String, Integer> topSearches = serverInterface.obterTopSearches();
                                 int i = 1;
                                 for (String s: topSearches.keySet()) {
                                     System.out.println(i + "º " + s);

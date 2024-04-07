@@ -88,7 +88,7 @@ public class RMIClient extends UnicastRemoteObject {
             System.out.println("1. Pesquisar");
             System.out.println("2. Indexar novo URL");
             System.out.println("3. Lista dos barrels");
-            System.out.println("4. Lista dos downloaders");
+            System.out.println("4. Tempo médio por pesquisa");
             System.out.println("5. Top 10 pesquisas");
             System.out.println("6. Logout");
         }
@@ -200,16 +200,18 @@ public class RMIClient extends UnicastRemoteObject {
                         }
                         case "4" -> {
                             // TODO: fucking lista dos downloaders
-                            System.out.println("<----Lista dos downloaders---->");
+                            System.out.println("<----Tempo médio por pesquisa---->");
                             try {
-                                List<String> downloadersList = serverInterface.getDownloadersList();
-                                for (String downloaderName : downloadersList) {
-                                    System.out.println(downloaderName);
+                                HashMap<String, Double> averageSearchTimes = serverInterface.getAverageSearchTime();
+                                for (String barrelName : averageSearchTimes.keySet()) {
+                                    double averageTime = averageSearchTimes.get(barrelName);
+                                    System.out.println("Barrel: " + barrelName + ", Tempo médio: " + averageTime + " décimos de segundo");
                                 }
                             } catch (RemoteException e) {
-                                System.out.println("[EXCEPTION] Erro ao obter a lista de downloaders: " + e);
+                                System.out.println("[EXCEPTION] Erro ao obter o tempo médio por pesquisa: " + e);
                             }
-                            System.out.println("-----------------------------");
+                            System.out.println("------------------------");
+
                         }
                         case "5" -> {
                             System.out.println("<----Top 10 pesquisas---->");

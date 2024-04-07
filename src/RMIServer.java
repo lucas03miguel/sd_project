@@ -20,15 +20,16 @@ import java.util.Properties;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 
 import static java.lang.Thread.sleep;
 
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
     private RMIServerInterface hPrincipal;
     private HashMap<String, Integer> searchCounts = new HashMap<>();
+    private HashMap<String, List<Long>> searchDurations = new HashMap<>();
     HashMap<String, Client> clientes;
     private URLQueueInterface urlQueue;
     private RMIBarrelInterface barrel;
@@ -169,23 +170,28 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
     
     @Override
-    public HashMap<String, HashSet<String>> pesquisar(String s) throws RemoteException {
-        //this.barrel.pesquisarLinks(s);
-        //if (b == null) return new String[]{"Erro ao selecionar barrel"};
-        
-        String[] palavras = s.split(" ");
-        HashMap<String, HashSet<String>> resp = new HashMap<>();
-        for (String palavra : palavras) {
-            resp = barrel.pesquisarLinks(palavra);
-            System.out.println(resp);
+public HashMap<String, HashSet<String>> pesquisar(String s) throws RemoteException {
+    String[] palavras = s.split(" ");
+    long startTime = System.currentTimeMillis();
+    HashMap<String, HashSet<String>> resp = new HashMap<>();
+    for (String palavra : palavras) {
+        HashMap<String, HashSet<String>> barrelResults = barrel.pesquisarLinks(palavra);
+        for (String barrelName : barrelResults.keySet()) {
+            HashSet<String> links = resp.getOrDefault(barrelName, new HashSet<>());
+            links.addAll(barrelResults.get(barrelName));
+            resp.put(barrelName, links);
         }
-
-        searchCounts.put(s, searchCounts.getOrDefault(s, 0) + 1);
-        
-        return resp;
-        //System.out.println("> " + s);
-        //print_on_all_clients(s);
     }
+    long endTime = System.currentTimeMillis();
+    long duration = endTime - startTime;
+    for (String barrelName : resp.keySet()) {
+        List<Long> durations = searchDurations.getOrDefault(barrelName, new ArrayList<>());
+        durations.add(duration);
+        searchDurations.put(barrelName, durations);
+    }
+    searchCounts.put(s, searchCounts.getOrDefault(s, 0) + 1);
+    return resp;
+}
 
     @Override
     public List<String> getBarrelsList() throws RemoteException {
@@ -193,14 +199,15 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
 
     @Override
-    public List<String> getDownloadersList() throws RemoteException {
-
-    List<String> downloadersList = new ArrayList<>();
-    for (int i = 0; i < 5; i++) {
-        downloadersList.add("Downloader " + i);
+    public HashMap<String, Double> getAverageSearchTime() throws RemoteException {
+    HashMap<String, Double> averageSearchTimes = new HashMap<>();
+    for (String barrelName : searchDurations.keySet()) {
+        List<Long> durations = searchDurations.get(barrelName);
+        double averageTime = durations.stream().mapToLong(Long::longValue).average().orElse(0.0);
+        averageSearchTimes.put(barrelName, averageTime / 100.0); // Converter para décimos de segundo
     }
-    return downloadersList;
-    }
+    return averageSearchTimes;
+}
 
     @Override
     public List<String> getTopSearches() throws RemoteException {

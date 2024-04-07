@@ -13,20 +13,47 @@ import java.util.*;
 
 import static java.lang.Thread.sleep;
 
+/**
+ * Classe que representa um cliente RMI.
+ * Estende a classe UnicastRemoteObject para permitir a comunicação remota.
+ */
 public class RMIClient extends UnicastRemoteObject {
-    private final int keepAliveTime = 5000;
+
+    /**
+     * O host do servidor RMI.
+     */
     private final String rmiHost;
+
+    /**
+     * A porta do servidor RMI.
+     */
     private final int rmiPort;
+
+    /**
+     * O nome do registro RMI.
+     */
     private final String rmiRegistryName;
+
+    /**
+     * A interface do servidor RMI.
+     */
     private RMIServerInterface serverInterface;
     
+    /**
+     * Construtor da classe RMIClient.
+     *
+     * @param rmiHost O host do servidor RMI.
+     * @param rmiPort A porta do servidor RMI.
+     * @param rmiRegistryName O nome do registro RMI.
+     * @throws RemoteException Se ocorrer um erro durante a comunicação remota.
+     * @throws InterruptedException Se a thread for interrompida.
+     */
     public RMIClient(String rmiHost, int rmiPort, String rmiRegistryName) throws RemoteException, InterruptedException {
         super();
         this.rmiHost = rmiHost;
         this.rmiPort = rmiPort;
         this.rmiRegistryName = rmiRegistryName;
         
-        //this.client = client;
         while (true) {
             try {
                 System.out.println("[CLIENT] Configuração: " + rmiHost + ":" + rmiPort + "->" + rmiRegistryName);
@@ -39,10 +66,13 @@ public class RMIClient extends UnicastRemoteObject {
             }
         }
         run();
-        //run();
         
     }
-    
+    /**
+     * Método principal que inicia o cliente RMI.
+     *
+     * @param args Os argumentos de linha de comando.
+     */
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
         Properties prop = new Properties();
@@ -55,14 +85,15 @@ public class RMIClient extends UnicastRemoteObject {
             int rmiPort = Integer.parseInt(prop.getProperty("PORT_SERVER"));
             String rmiRegistryName = prop.getProperty("REGISTRY_NAME_SERVER");
             
-            //Client client = new Client("Antonio", false);
-            //RMIServerInterface svInterface = (RMIServerInterface) Naming.lookup(rmiRegistryName);
             new RMIClient(rmiHost, rmiPort, rmiRegistryName);
         } catch (Exception e) {
             System.out.println("[CLIENT] Erro ao conectar ao servidor: " + e);
         }
     }
     
+    /**
+     * Executa o cliente RMI.
+     */
     public void run(){
         try {
             this.menu();
@@ -71,14 +102,18 @@ public class RMIClient extends UnicastRemoteObject {
         }
     }
     
+    /**
+     * Imprime o menu de opções de acordo com o tipo de usuário.
+     *
+     * @param userType O tipo de usuário (0 para não autenticado, 1 para autenticado).
+     */
     private void printMenu(int userType) {
         System.out.println("\n----Menu----");
         
-        // login or register
         if (userType == 0) {
             System.out.println("1. Login");
             System.out.println("2. Registar");
-        // user logged - main menu
+
         } else if (userType == 1) {
             System.out.println("1. Pesquisar");
             System.out.println("2. Indexar novo URL");
@@ -93,6 +128,11 @@ public class RMIClient extends UnicastRemoteObject {
         System.out.print("Opção: ");
     }
     
+    /**
+     * Exibe o menu principal e processa as opções selecionadas pelo usuário.
+     *
+     * @throws InterruptedException Se a thread for interrompida.
+     */
     private void menu() throws InterruptedException {
         int userType = 0;
         BufferedReader br;
@@ -195,7 +235,7 @@ public class RMIClient extends UnicastRemoteObject {
                             } while (true);
                         }
                         case "3" -> {
-                            // TODO: sao os fucking barris de vinho
+
                             System.out.println("<----Lista dos barrels---->");
                             
                             List<String> barrelsList = serverInterface.obterListaBarrels();
@@ -204,7 +244,7 @@ public class RMIClient extends UnicastRemoteObject {
                             System.out.println("-------------------------");
                         }
                         case "4" -> {
-                            // TODO: fucking lista dos downloaders
+
                             System.out.println("<----Tempo médio por pesquisa---->");
                             try {
     
@@ -251,7 +291,6 @@ public class RMIClient extends UnicastRemoteObject {
             } catch (Exception e) {
                 System.out.println("[EXCEPTION] Exceção na main: " + e);
                 serverErrorHandling();
-                //System.exit(-1);
             }
         }
         try {
@@ -261,6 +300,13 @@ public class RMIClient extends UnicastRemoteObject {
         }
     }
     
+    /**
+     * Lê os inputs do usuário (username e password) a partir do BufferedReader.
+     *
+     * @param br O BufferedReader para ler os inputs.
+     * @return Uma string a conter o resultado da leitura dos inputs.
+     * @throws RemoteException Se ocorrer um erro durante a comunicação remota.
+     */
     public String lerInputs(BufferedReader br) throws RemoteException {
         String username;
         try {
@@ -296,7 +342,13 @@ public class RMIClient extends UnicastRemoteObject {
         else return "0 " + username + " " + password;
     }
     
-    
+    /**
+     * Realiza o processo de login do usuário.
+     *
+     * @param br O BufferedReader para ler os inputs.
+     * @return 1 se o login for bem-sucedido, -1 se ocorrer um erro no servidor, 0 se o usuário decidir não tentar novamente.
+     * @throws IOException Se ocorrer um erro de I/O.
+     */
     private int login(BufferedReader br) throws IOException {
         System.out.println("\n----Login----");
         while (true) {
@@ -328,6 +380,13 @@ public class RMIClient extends UnicastRemoteObject {
         }
     }
     
+    /**
+     * Realiza o processo de registo de um novo usuário.
+     *
+     * @param br O BufferedReader para ler os inputs.
+     * @return 1 se o registo for bem-sucedido, -1 se ocorrer um erro no servidor, 0 se o usuário decidir não tentar novamente.
+     * @throws RemoteException Se ocorrer um erro durante a comunicação remota.
+     */
     private int registar(BufferedReader br) throws RemoteException {
         System.out.println("\n----Registar----");
         
@@ -352,12 +411,11 @@ public class RMIClient extends UnicastRemoteObject {
                     }
                 } while (!choice.equalsIgnoreCase("s") && !choice.equalsIgnoreCase("n"));
                 if (choice.equalsIgnoreCase("n")) {
-                    return 0; // Exit the registration process
+                    return 0; 
                 }
-                // If the user chooses to try again, the loop will continue, prompting for new input.
+
             } else if (parts[0].equals("0")) {
-                // This condition is for when the user does not exist and we need to register them.
-                // Ensure that parts[2] exists before trying to access it.
+
                 if (parts.length > 2) {
                     String username = parts[1];
                     String password = parts[2];
@@ -368,7 +426,7 @@ public class RMIClient extends UnicastRemoteObject {
                         return -1;
                     } else {
                         System.out.println("[CLIENT] " + res);
-                        return 1; // Successful registration
+                        return 1; 
                     }
                 } else {
                     System.out.println("[CLIENT] Registo falhou: dados insuficientes fornecidos.");
@@ -377,21 +435,18 @@ public class RMIClient extends UnicastRemoteObject {
             }
         }
     }
-    
-    
-    /*
-    
-    public void printar(String s) throws RemoteException {
-        System.out.println("> " + s);
-    }
-    */
-    
+       
+    /**
+     * Lida com erros de conexão com o servidor, tentando reconectar.
+     *
+     * @throws InterruptedException Se a thread for interrompida.
+     */
     private void serverErrorHandling() throws InterruptedException {
-        //System.out.println("[EXCEPTION] Não conseguiu conectar ao server.");
+
         while (true) {
             try {
                 System.out.println("[CLIENT] Tentando reconectar ao server...");
-                //Thread.sleep(keepAliveTime);
+
                 serverInterface = (RMIServerInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
                 
                 System.out.println("[CLIENT] Reconectado!");

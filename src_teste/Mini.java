@@ -1,3 +1,6 @@
+/**
+ * @author Lucas e Simão
+ */
 package src_teste;
 
 import org.jsoup.Jsoup;

@@ -10,8 +10,8 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Properties;
 import java.util.List;
+import java.util.Properties;
 
 public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarrelInterface{
     private final int id;

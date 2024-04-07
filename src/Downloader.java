@@ -261,6 +261,8 @@ public class Downloader extends Thread implements Remote {
         //System.out.println("[DOWNLOADER] Enviando palavras: " + message);
         sendMessage(message);
         
+        if (webPage.getTextSnippet().equals("")) webPage.setTextSnippet("Sem citacao");
+        if (webPage.getTitle().equals("")) webPage.setTitle("Sem titulo");
         message = "type | textSnippet; url | " + url + "; title | " + title + "; textSnippet | " + webPage.getTextSnippet();
         sendMessage(message);
     }

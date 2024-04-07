@@ -15,12 +15,10 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -28,7 +26,7 @@ import static java.lang.Thread.sleep;
 
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
     private RMIServerInterface hPrincipal;
-    private HashMap<String, Integer> searchCounts = new HashMap<>();
+    //private HashMap<String, Integer> searchCounts = new HashMap<>();
     private HashMap<String, Client> clientes;
     private URLQueueInterface urlQueue;
     private RMIBarrelInterface barrel;
@@ -170,17 +168,12 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     
     @Override
     public HashMap<String, ArrayList<String>> pesquisar(String s) throws RemoteException {
-        //this.barrel.pesquisarLinks(s);
-        //if (b == null) return new String[]{"Erro ao selecionar barrel"};
-        
         String[] palavras = s.split(" ");
         HashMap<String, ArrayList<String>> resp = new HashMap<>();
-        for (String palavra : palavras) {
+        for (String palavra : palavras)
             resp = barrel.pesquisarLinks(palavra);
-            System.out.println(resp);
-        }
-
-        searchCounts.put(s, searchCounts.getOrDefault(s, 0) + 1);
+        
+        //searchCounts.put(s, searchCounts.getOrDefault(s, 0) + 1);
         
         return resp;
         //System.out.println("> " + s);
@@ -188,21 +181,23 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
 
     @Override
-    public List<String> getBarrelsList() throws RemoteException {
-        return barrel.getBarrelsList();
+    public List<String> obterListaBarrels() throws RemoteException {
+        return barrel.obterListaBarrels();
     }
 
     @Override
-    public List<String> getTopSearches() throws RemoteException {
-        // Ordena as pesquisas por contagem em ordem decrescente
+    public HashMap<String, Integer> getTopSearches() throws RemoteException {
+        return this.barrel.obterTopSearches();
+        
+        /*
         List<Map.Entry<String, Integer>> sortedSearches = new ArrayList<>(searchCounts.entrySet());
         sortedSearches.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
-
-        // Retorna as top 10 pesquisas
+        
         return sortedSearches.stream()
                 .limit(10)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
+         */
     }
     /*
     public void print_on_all_clients(String s) {

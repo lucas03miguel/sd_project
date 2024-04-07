@@ -14,13 +14,20 @@ public class Barrel extends Thread implements Serializable {
     private HashMap<String, HashSet<String>> index; //chave: palavra, valor: conjunto de urls
     private HashMap<String, HashSet<String>> links; //chave: url, valor: conjunto de urls
     private HashMap<String, ArrayList<String>> webInfo; //chave: url, valor: snippet de texto
+    private HashMap<String, Integer> searchs; //chave: pesquisa, valor: número de vezes que foi pesquisada
     private final String linksFilename; //nome do arquivo que guarda os links
     private final String wordsFilename; //nome do arquivo que guarda as palavras
     private final String textSnippetFilename; //nome do arquivo que guarda os snippets de texto
+    private final String searchsFilename; //nome do arquivo que guarda as pesquisas
     private final File linksFile; //arquivo que guarda os links
     private final File wordsFile; //arquivo que guarda as palavras
     private final File textSnippetFile; //arquivo que guarda os snippets de texto
-    private Semaphore sem;
+    private final File searchsFile; //arquivo que guarda as pesquisas
+    private final Semaphore semUpdateWords;
+    private final Semaphore semUpdateLinks;
+    private final Semaphore semUpdateInfo;
+    private final Semaphore semSearch;
+    private final Semaphore sem;
     
     public Barrel(int id, int multicastPort, String multicastAddress) throws IOException {
         super();
@@ -34,15 +41,22 @@ public class Barrel extends Thread implements Serializable {
         this.links = new HashMap<>();
         this.index = new HashMap<>();
         this.webInfo = new HashMap<>();
+        this.searchs = new HashMap<>();
         
-        this.linksFilename = "./database/links-" + id + ".txt";
-        this.wordsFilename = "./database/palavras-" + id + ".txt";
-        this.textSnippetFilename = "./database/texto-" + id + ".txt";
+        this.linksFilename = "./database/links.txt";
+        this.wordsFilename = "./database/words.txt";
+        this.textSnippetFilename = "./database/info.txt";
+        this.searchsFilename = "./database/searchs.txt";
         
         this.linksFile = new File(linksFilename);
         this.wordsFile = new File(wordsFilename);
         this.textSnippetFile = new File(textSnippetFilename);
+        this.searchsFile = new File(searchsFilename);
     
+        this.semUpdateWords = new Semaphore(1);
+        this.semUpdateLinks = new Semaphore(1);
+        this.semUpdateInfo = new Semaphore(1);
+        this.semSearch = new Semaphore(1);
         this.sem = new Semaphore(1);
         System.out.println("BARREL " + id + " INICIALIZADO COM SUCESSO");
     }
@@ -71,54 +85,55 @@ public class Barrel extends Thread implements Serializable {
                 System.out.println("Guardei o url " + url);
                 //System.out.println("type: " + type + " count: " + count);
                 //System.out.println(Arrays.toString(list) + "\n");
-                if (type.equals("links")) {
-                    int count = Integer.parseInt(list[2].split(" \\| ")[1]);
-                    
-                    for (int i = 3; i < count; i++) {
-                        String chave = list[i].split(" \\| ")[1];
-                        if (!this.links.containsKey(chave))
-                            this.links.put(chave, new HashSet<>());
-                        this.links.get(chave).add(url);
+                switch (type) {
+                    case "links" -> {
+                        int count = Integer.parseInt(list[2].split(" \\| ")[1]);
+            
+                        for (int i = 3; i < count; i++) {
+                            String chave = list[i].split(" \\| ")[1];
+                            if (!this.links.containsKey(chave))
+                                this.links.put(chave, new HashSet<>());
+                            this.links.get(chave).add(url);
+                        }
+                        updateLinks();
                     }
-                    
-                } else if (type.equals("words")) {
-                    int count = Integer.parseInt(list[2].split(" \\| ")[1]);
-    
-                    for (int i = 3; i < count; i++) {
-                        String chave = list[i].split(" \\| ")[1];
-                        if (!this.index.containsKey(chave))
-                            this.index.put(chave, new HashSet<>());
-                        this.index.get(chave).add(url);
+                    case "words" -> {
+                        int count = Integer.parseInt(list[2].split(" \\| ")[1]);
+            
+                        for (int i = 3; i < count; i++) {
+                            String chave = list[i].split(" \\| ")[1];
+                            if (!this.index.containsKey(chave))
+                                this.index.put(chave, new HashSet<>());
+                            this.index.get(chave).add(url);
+                        }
+                        updateWords();
                     }
-                    
-                    
-                    
-                } else if (type.equals("textSnippet")) {
-                    String titulo = list[2].split(" \\| ")[1];
-                    String texto = list[3].split(" \\| ")[1];
-                    
-                    if (!this.webInfo.containsKey(url)) {
-                        ArrayList<String> aux = new ArrayList<>();
-                        aux.add(titulo);
-                        aux.add(texto);
-                        this.webInfo.put(url, aux);
+                    case "textSnippet" -> {
+                        String titulo = list[2].split(" \\| ")[1];
+                        String texto = list[3].split(" \\| ")[1];
+                        if (!this.webInfo.containsKey(url)) {
+                            ArrayList<String> aux = new ArrayList<>();
+                            aux.add(titulo);
+                            aux.add(texto);
+                            this.webInfo.put(url, aux);
+                        }
+                        System.out.println("titulo: " + titulo);
+                        System.out.println("chave: " + texto);
+                        
+                        updateInfo();
                     }
-                    
-                    System.out.println("titulo: " + titulo);
-                    System.out.println("chave: " + texto);
-                    
                 }
                 
-                updateFiles();
             } catch (Exception e) {
                 System.out.println("[Erro no Barrel " + id + "] " + e);
+                e.printStackTrace();
             }
         }
     }
     
-    private void updateFiles() {
+    private void updateWords() {
         try {
-            this.sem.acquire();
+            criarFicheiros();
             /*
             if (!linksFile.exists()) {
                 linksFile.createNewFile();
@@ -150,7 +165,8 @@ public class Barrel extends Thread implements Serializable {
                 currentIndex.get(word).addAll(index.get(word));
             }
             */
-            
+    
+            this.semUpdateWords.acquire();
             FileWriter writer = new FileWriter(wordsFile);
             for (String word : this.index.keySet()) {
                 writer.write(word);
@@ -159,8 +175,18 @@ public class Barrel extends Thread implements Serializable {
                 writer.write("\n");
             }
             writer.close();
+            this.semUpdateWords.release();
+        } catch (Exception e) {
+            this.semUpdateWords.release();
+            System.out.println("[EXCEPTION] Erro a atualizar o ficheiro das palavras: " + e);
+        }
+    }
+    
+    private void updateLinks() {
+        try {
+            criarFicheiros();
             
-            
+            this.semUpdateLinks.acquire();
             FileWriter linksWriter = new FileWriter(linksFile);
             for (String link : this.links.keySet()) {
                 linksWriter.write(link);
@@ -169,17 +195,28 @@ public class Barrel extends Thread implements Serializable {
                 linksWriter.write("\n");
             }
             linksWriter.close();
+            this.semUpdateLinks.release();
+        } catch (Exception e) {
+            this.semUpdateLinks.release();
+            System.out.println("[EXCEPTION] Erro a atualizar o ficheiro dos links: " + e);
+        }
+    }
+    
+    private void updateInfo() {
+        try {
+            criarFicheiros();
             
-            
+            this.semUpdateInfo.acquire();
             FileWriter snippetWriter = new FileWriter(textSnippetFile);
             for (String url : this.webInfo.keySet()) {
                 snippetWriter.write(url + " | " + this.webInfo.get(url).toArray()[0] + " | " + this.webInfo.get(url).toArray()[1] + "\n");
             }
             snippetWriter.close();
             
-            this.sem.release();
+            this.semUpdateInfo.release();
         } catch (Exception e) {
-            System.out.println("[EXCEPTION] Erro a atualizar os ficheiros: " + e);
+            this.semUpdateInfo.release();
+            System.out.println("[EXCEPTION] Erro a atualizar o ficheiro das informacoes: " + e);
         }
     }
     /*
@@ -226,15 +263,18 @@ public class Barrel extends Thread implements Serializable {
         HashMap<String, ArrayList<String>> resp = new HashMap<>();
         
         try {
-            if (!wordsFile.exists()) {
-                boolean __ = wordsFile.createNewFile();
-            }
-            if (!textSnippetFile.exists()) {
-                boolean __ = textSnippetFile.createNewFile();
-            }
-            if (!linksFile.exists()) {
-                boolean __ = linksFile.createNewFile();
-            }
+            criarFicheiros();
+            
+            this.semSearch.acquire();
+            
+            FileWriter fw = new FileWriter(searchsFile);
+            if (!this.searchs.containsKey(palavra)) this.searchs.put(palavra, 1);
+            else this.searchs.put(palavra, this.searchs.get(palavra) + 1);
+    
+            for (String search : this.searchs.keySet())
+                fw.write(search + " " + this.searchs.get(search) + "\n");
+            fw.close();
+            this.semSearch.release();
             
             this.sem.acquire();
             BufferedReader fr = new BufferedReader(new FileReader(wordsFile));
@@ -265,15 +305,19 @@ public class Barrel extends Thread implements Serializable {
                     resp.get(parts[0]).add(String.valueOf(parts.length - 1));
                 }
             }
+            
+            for (String link : resp.keySet()) {
+                if (resp.get(link).size() == 2)
+                    resp.get(link).add("0");
+            }
+            
             fr.close();
             this.sem.release();
         } catch (Exception e) {
+            this.sem.release();
             System.out.println("[EXCEPTION] " + e);
             HashMap<String, ArrayList<String>> error = new HashMap<>();
             error.put("Erro", new ArrayList<>());
-            this.sem.release();
-            
-            
             return error;
         }
         if (urls.isEmpty()) {
@@ -282,8 +326,28 @@ public class Barrel extends Thread implements Serializable {
             error.put("Nenhum", new ArrayList<>());
             return error;
         }
-        System.out.println("oiiii" + resp);
+        System.out.println("oiiii " + resp);
     
+        HashMap<String, Integer> linksRelevance = new HashMap<>();
+        for(String link: resp.keySet()){
+            System.out.println("aaaaaaa");
+            System.out.println(resp.get(link));
+            System.out.println();
+            int relevancia = Integer.parseInt(resp.get(link).get(2));
+            linksRelevance.put(link, relevancia);
+        }
+        System.out.println("oooooooooooooooo" + linksRelevance);
+        
+        List<String> sortedKeys = new ArrayList<>(resp.keySet());
+        sortedKeys.sort((a, b) -> linksRelevance.get(b) - linksRelevance.get(a));
+        
+        HashMap<String, ArrayList<String>> sortedLinks = new LinkedHashMap<>();
+        for (String key : sortedKeys) {
+            sortedLinks.put(key, resp.get(key));
+        }
+        System.out.println(sortedLinks);
+        
+        /*
         ArrayList<Map.Entry<String, ArrayList<String>>> list = new ArrayList<>(resp.entrySet());
     
         for (int i = 0; i < list.size() - 1; i++) {
@@ -291,20 +355,70 @@ public class Barrel extends Thread implements Serializable {
                 int a = Integer.parseInt(list.get(j).getValue().get(2));
                 System.out.println("aaaaaaaaaaaaaaa "+ a);
                 if (a < Integer.parseInt(list.get(j + 1).getValue().get(2))) {
-                    // Trocando as entradas se o valor do terceiro parâmetro do ArrayList for menor
                     Map.Entry<String, ArrayList<String>> temp = list.get(j);
                     list.set(j, list.get(j + 1));
                     list.set(j + 1, temp);
                 }
             }
         }
-    
-        // Convertendo a lista ordenada de volta para um HashMap
+        
         HashMap<String, ArrayList<String>> sortedMap = new HashMap<>();
         for (Map.Entry<String, ArrayList<String>> entry : list) {
             sortedMap.put(entry.getKey(), entry.getValue());
         }
-        System.out.println(resp);
-        return sortedMap;
+        */
+        
+        return sortedLinks;
+    }
+    
+    public HashMap<String, Integer> obterTopSearches() {
+        try {
+            this.semSearch.acquire();
+            BufferedReader fr = new BufferedReader(new FileReader(searchsFile));
+            String line;
+            while ((line = fr.readLine()) != null) {
+                String[] parts = line.split(" ");
+                this.searchs.put(parts[0], Integer.parseInt(parts[1]));
+            }
+    
+            List<Map.Entry<String, Integer>> list = new ArrayList<>(searchs.entrySet());
+            list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+    
+            HashMap<String, Integer> sortedMap = new LinkedHashMap<>();
+            for (Map.Entry<String, Integer> entry : list)
+                sortedMap.put(entry.getKey(), entry.getValue());
+            
+            fr.close();
+            this.semSearch.release();
+            return sortedMap;
+            
+        } catch (Exception e) {
+            this.semSearch.release();
+            System.out.println("[EXCEPTION] Erro ao obter as pesquisas: " + e);
+            HashMap<String, Integer> error = new HashMap<>();
+            error.put("Erro", null);
+            return error;
+        }
+    }
+    
+    private void criarFicheiros() {
+        boolean __ = false;
+        try {
+            if (!linksFile.exists()) {
+                __ = linksFile.createNewFile();
+            }
+            if (!wordsFile.exists()) {
+                __ = wordsFile.createNewFile();
+            }
+            if (!textSnippetFile.exists()) {
+                __ = textSnippetFile.createNewFile();
+            }
+            if (!searchsFile.exists()) {
+                __ = searchsFile.createNewFile();
+            }
+            System.out.println(__);
+        } catch (Exception e) {
+            System.out.println("[EXCEPTION] Erro ao criar os ficheiros: " + e);
+        }
     }
 }

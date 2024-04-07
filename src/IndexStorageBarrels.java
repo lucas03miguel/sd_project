@@ -10,7 +10,6 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.List;
 
@@ -103,8 +102,9 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
             String rmiRegister = prop.getProperty("RMI_REGISTRY_NAME_BARRELS");
     
             IndexStorageBarrels mainBarrel = new IndexStorageBarrels(0, rmiHost, rmiPort, rmiRegister, multPort, multAddress);
-    
-            for (int i = 1; i < 2; i++) {
+            
+            int nBarrels = Integer.parseInt(prop.getProperty("N_BARRELS"));
+            for (int i = 1; i < nBarrels; i++) {
         
                 if (multAddress == null || multPort == 0) {
                     System.out.println("[BARREL " + i + "] Erro ao ler as propriedades do ficheiro de configuração.");
@@ -125,6 +125,7 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         }
     }
     
+    @Override
     public HashMap<String, ArrayList<String>> pesquisarLinks(String s) throws RemoteException {
         Barrel barrel = this.selecionarBarrel();
         if (barrel == null) {
@@ -136,7 +137,8 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         return barrel.obterLinks(s);
     }
     
-    public List<String> getBarrelsList() {
+    @Override
+    public List<String> obterListaBarrels() throws RemoteException {
         List<String> barrelNames = new ArrayList<>();
         for (Barrel barrel : barrelsThreads) {
             barrelNames.add("Barrel " + barrel.getId());
@@ -144,27 +146,36 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
         return barrelNames;
     }
     
+    @Override
+    public HashMap<String, Integer> obterTopSearches() throws RemoteException {
+        Barrel barrel = this.selecionarBarrel();
+        if (barrel == null) {
+            HashMap<String, Integer> result = new HashMap<>();
+            result.put("Erro", null);
+            return result;
+        }
+        return barrel.obterTopSearches();
+    }
+    
+    @Override
     public boolean alive() throws RemoteException {
         Barrel barrel = this.selecionarBarrel();
         return barrel != null;
     }
     
+    @Override
     public Barrel selecionarBarrel() {
-        // escolhe um barril aleatório para executar a tarefa
         if (this.barrelsThreads.size() == 0) {
             System.out.println("[BARREL-INTERFACE] Nenhum barrel disponivel. À espera que um barrel fique disponivel...");
-            // wait for a short period and try again
             try {
-                Thread.sleep(1000); // wait for 1 second
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                System.out.println("[BARREL-INTERFACE] Erro: " + e);
             }
-            return selecionarBarrel(); // recursive call to try again
+            return selecionarBarrel();
         }
         
         int random = (int) (Math.random() * this.barrelsThreads.size());
-        
-        // verificar se o barril está vivo, se não estiver remover da lista e selecionar outro barril
         if (!this.barrelsThreads.get(random).isAlive()) {
             System.out.println("[BARREL-INTERFACE] Barrel " + random + " não está vivo. A remover da lista...");
             this.barrelsThreads.remove(random);

@@ -138,8 +138,8 @@ public class RMIClient extends UnicastRemoteObject {
                             System.out.println("<----Pesquisar---->");
                             System.out.print("Insira pesquisa: ");
                             String searchQuery = br.readLine();
-                            while (searchQuery.length() < 3) {
-                                System.out.print("Pesquisa inválida (3+ carateres): ");
+                            while (searchQuery.length() < 1) {
+                                System.out.print("Pesquisa inválida (1+ carateres): ");
                                 searchQuery = br.readLine();
                             }
                             HashMap<String, ArrayList<String>> resp = serverInterface.pesquisar(searchQuery);
@@ -153,11 +153,11 @@ public class RMIClient extends UnicastRemoteObject {
                                 int tamanho = resp.size();
                                 for (String link : resp.keySet()) {
                                     System.out.println("Link: " + link);
-                                    System.out.println("Title: " + resp.get(link).toArray()[1]);
-                                    System.out.println("Text: " + resp.get(link).toArray()[0]);
+                                    System.out.println("Title: " + resp.get(link).toArray()[0]);
+                                    System.out.println("Text: " + resp.get(link).toArray()[1]);
                                     System.out.println();
                                     i++;
-                                    if (i == 10 && tamanho > 10) {
+                                    if (i%10 == 0 && tamanho > 10) {
                                         System.out.print("Deseja ver mais URLs? (s/n): ");
                                         String escolha = br.readLine();
                                         while (!escolha.equalsIgnoreCase("s") && !escolha.equalsIgnoreCase("n")) {
@@ -192,7 +192,7 @@ public class RMIClient extends UnicastRemoteObject {
                             // TODO: sao os fucking barris de vinho
                             System.out.println("<----Lista dos barrels---->");
                             
-                            List<String> barrelsList = serverInterface.getBarrelsList();
+                            List<String> barrelsList = serverInterface.obterListaBarrels();
                             for (String barrelName : barrelsList)
                                 System.out.println(barrelName);
                             System.out.println("-------------------------");
@@ -206,9 +206,11 @@ public class RMIClient extends UnicastRemoteObject {
                         case "5" -> {
                             System.out.println("<----Top 10 pesquisas---->");
                             try {
-                                List<String> topSearches = serverInterface.getTopSearches();
-                                for (int i = 0; i < topSearches.size(); i++) {
-                                    System.out.println((i + 1) + ". " + topSearches.get(i));
+                                HashMap<String, Integer> topSearches = serverInterface.getTopSearches();
+                                int i = 1;
+                                for (String s: topSearches.keySet()) {
+                                    System.out.println(i + "º " + s);
+                                    ++i;
                                 }
                             } catch (RemoteException e) {
                                 System.out.println("[EXCEPTION] Erro ao obter as top 10 pesquisas: " + e);

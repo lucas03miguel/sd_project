@@ -5,3 +5,5 @@ src/*.class
 src/interfaces/*.class
 src_teste/
 bin/
+META-INF/
+*.zip

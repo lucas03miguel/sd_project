@@ -14,14 +14,11 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 import static java.lang.Thread.sleep;
 
-public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
+public class RMIServer extends UnicastRemoteObject implements RMIServerInterface, Serializable {
     private RMIServerInterface hPrincipal;
     private HashMap<String, Integer> searchCounts = new HashMap<>();
     private HashMap<String, List<Long>> searchDurations = new HashMap<>();
@@ -31,6 +28,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     private int barrelRMIPort;
     private String barrelRMIHost;
     private String barrelRMIRegistryName;
+    HashMap<Integer, Double> temposMedios;
     
     
     public RMIServer(int rmiPort, String rmiHost, String rmiRegistryName, String urlQueueRegistryName, int barrelRMIPort, String barrelRMIHost, String barrelRMIRegistryName) throws RemoteException {
@@ -40,6 +38,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         this.barrelRMIHost = barrelRMIHost;
         this.barrelRMIRegistryName = barrelRMIRegistryName;
         this.hPrincipal = null;
+        this.temposMedios = new HashMap<>();
         
         while (true) {
             try {
@@ -164,29 +163,41 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
     
     @Override
+    public HashMap<Integer, Double> obterTempos() throws RemoteException {
+        return this.temposMedios;
+    }
+    
+    @Override
     public HashMap<String, ArrayList<String>> pesquisar(String s) throws RemoteException {
         String[] palavras = s.split(" ");
-        long startTime = System.currentTimeMillis();
+        long startTime, endTime;
         HashMap<String, ArrayList<String>> resp = new HashMap<>();
+        HashMap<String, ArrayList<String>> aux = new HashMap<>();
+        HashMap<Integer, Double> tempos = new HashMap<>();
         for (String palavra : palavras) {
-            HashMap<String, ArrayList<String>> barrelResults = barrel.pesquisarLinks(palavra);
-            for (String barrelName : barrelResults.keySet()) {
-                ArrayList<String> links = resp.getOrDefault(barrelName, new ArrayList<>());
-                links.addAll(barrelResults.get(barrelName));
-                resp.put(barrelName, links);
-            }
+            Barrel barrelEscolhido = this.barrel.selecionarBarrel();
+            startTime = System.currentTimeMillis();
+            aux = barrel.pesquisarLinks(palavra, barrelEscolhido);
+            endTime = System.currentTimeMillis();
+            
+            double tempo = (double) (endTime - startTime);
+            int id = barrelEscolhido.getIdBarrel();
+            if (!tempos.containsKey(id)) tempos.put(id, tempo);
+            else tempos.put(id, tempos.get(id) + tempo);
         }
-        long endTime = System.currentTimeMillis();
-        long duration = endTime - startTime;
-        for (String barrelName : resp.keySet()) {
-            List<Long> durations = searchDurations.getOrDefault(barrelName, new ArrayList<>());
-            durations.add(duration);
-            searchDurations.put(barrelName, durations);
+        
+        
+        for (Integer id: tempos.keySet()) {
+            temposMedios.put(id, tempos.get(id) / palavras.length);
         }
-        searchCounts.put(s, searchCounts.getOrDefault(s, 0) + 1);
+        
+        for (String url : aux.keySet()) {
+            if (resp.containsKey(url)) resp.get(url).addAll(aux.get(url));
+            else resp.put(url, aux.get(url));
+        }
         return resp;
     }
-
+    
     @Override
     public List<String> obterListaBarrels() throws RemoteException {
         return barrel.obterListaBarrels();
@@ -195,58 +206,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     @Override
     public HashMap<String, Integer> getTopSearches() throws RemoteException {
         return this.barrel.obterTopSearches();
-        
-        /*
-        List<Map.Entry<String, Integer>> sortedSearches = new ArrayList<>(searchCounts.entrySet());
-        sortedSearches.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
-        
-        return sortedSearches.stream()
-                .limit(10)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-         */
     }
-    
-    @Override
-    public HashMap<String, Double> getAverageSearchTime() throws RemoteException {
-        HashMap<String, Double> averageSearchTimes = new HashMap<>();
-        for (String barrelName : searchDurations.keySet()) {
-            List<Long> durations = searchDurations.get(barrelName);
-            double averageTime = durations.stream().mapToLong(Long::longValue).average().orElse(0.0);
-            averageSearchTimes.put(barrelName, averageTime / 100.0); // Converter para décimos de segundo
-        }
-        return averageSearchTimes;
-    }
-    /*
-    public void print_on_all_clients(String s) {
-        //for (RMIClientInterface c : clientes.values()) {
-        try {
-            for (String key : clientes.keySet()) {
-                clientes.get(key).print_on_client(s);
-            }
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
-        //}
-    }
-    
-    public void subscribe(RMIClientInterface c) throws RemoteException {
-        System.out.print("client subscribed");
-        clientes.put(c.toString(), new Client(c.toString(), false));
-    }
-
-    private void updateClient(String username, Client client) throws RemoteException {
-        if (client == null) {
-            this.clientes.remove(username);
-        } else {
-            if (this.clientes.containsKey(username)) {
-                this.clientes.replace(username, client);
-            } else {
-                this.clientes.put(username, client);
-            }
-        }
-    }
-    */
     
     public int checkLogin(String username, String password) throws RemoteException {
         //TODO: Modificar esta shit porque nao esta bem. temos que usar o fucking barril

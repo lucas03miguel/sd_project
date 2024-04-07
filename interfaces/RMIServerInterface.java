@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public interface RMIServerInterface extends Remote {
     int checkLogin(String username, String password) throws RemoteException;
@@ -12,9 +13,10 @@ public interface RMIServerInterface extends Remote {
     String indexar(String url) throws RemoteException;
     List<String> obterListaBarrels() throws RemoteException;
     HashMap<String, Integer> getTopSearches() throws RemoteException;
-    HashMap<String, Double> getAverageSearchTime() throws RemoteException;
     HashMap<String, ArrayList<String>> pesquisar(String s) throws RemoteException;
     boolean alive() throws RemoteException;
+    HashMap<Integer, Double> obterTempos() throws RemoteException;
+
     
     /*
     boolean alive() throws RemoteException;

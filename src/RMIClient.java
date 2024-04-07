@@ -2,21 +2,15 @@ package src;
 
 import interfaces.RMIServerInterface;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 import static java.lang.Thread.sleep;
 
-public class RMIClient extends UnicastRemoteObject {
+public class RMIClient extends UnicastRemoteObject implements Serializable {
     private final int keepAliveTime = 5000;
     private final String rmiHost;
     private final int rmiPort;
@@ -203,11 +197,15 @@ public class RMIClient extends UnicastRemoteObject {
                             // TODO: fucking lista dos downloaders
                             System.out.println("<----Tempo médio por pesquisa---->");
                             try {
-                                HashMap<String, Double> averageSearchTimes = serverInterface.getAverageSearchTime();
-                                for (String barrelName : averageSearchTimes.keySet()) {
-                                    double averageTime = averageSearchTimes.get(barrelName);
-                                    System.out.println("Barrel: " + barrelName + ", Tempo médio: " + averageTime + " décimos de segundo");
+    
+                                HashMap<Integer, Double> averageTime = serverInterface.obterTempos();
+                                for (Integer id: averageTime.keySet()) {
+                                    System.out.println("Barril " + id + "- tempo: " + averageTime.get(id));
                                 }
+                                
+                                
+                                System.out.println("Tempo médio: " + averageTime + " décimos de segundo");
+                                
                             } catch (RemoteException e) {
                                 System.out.println("[EXCEPTION] Erro ao obter o tempo médio por pesquisa: " + e);
                             }

@@ -7,10 +7,12 @@ import java.util.concurrent.Semaphore;
 
 public class Barrel extends Thread implements Serializable {
     private final int id;
+    private int nPesquisas;
     private final int multicastPort;
     private final String multicastAddress;
     private MulticastSocket socket;
     private InetAddress group;
+    private HashMap<Integer, Integer> pesquisas;
     private HashMap<String, HashSet<String>> index; //chave: palavra, valor: conjunto de urls
     private HashMap<String, HashSet<String>> links; //chave: url, valor: conjunto de urls
     private HashMap<String, ArrayList<String>> webInfo; //chave: url, valor: snippet de texto
@@ -32,6 +34,7 @@ public class Barrel extends Thread implements Serializable {
     public Barrel(int id, int multicastPort, String multicastAddress) throws IOException {
         super();
         this.id = id;
+        this.nPesquisas = 0;
         
         this.multicastPort = multicastPort;
         this.multicastAddress = multicastAddress;
@@ -42,6 +45,7 @@ public class Barrel extends Thread implements Serializable {
         this.index = new HashMap<>();
         this.webInfo = new HashMap<>();
         this.searchs = new HashMap<>();
+        this.pesquisas = new HashMap<>();
         
         this.linksFilename = "./database/links.txt";
         this.wordsFilename = "./database/words.txt";
@@ -266,6 +270,7 @@ public class Barrel extends Thread implements Serializable {
             criarFicheiros();
             
             this.semSearch.acquire();
+            //long startTime = System.currentTimeMillis();
             
             FileWriter fw = new FileWriter(searchsFile);
             if (!this.searchs.containsKey(palavra)) this.searchs.put(palavra, 1);
@@ -312,12 +317,18 @@ public class Barrel extends Thread implements Serializable {
             }
             
             fr.close();
+            //long endTime = System.currentTimeMillis();
+            //long time = endTime - startTime;
+            this.nPesquisas++;
+    
+            pesquisas.put(id, nPesquisas);
             this.sem.release();
         } catch (Exception e) {
             this.sem.release();
             System.out.println("[EXCEPTION] " + e);
             HashMap<String, ArrayList<String>> error = new HashMap<>();
             error.put("Erro", new ArrayList<>());
+            
             return error;
         }
         if (urls.isEmpty()) {
@@ -420,5 +431,12 @@ public class Barrel extends Thread implements Serializable {
         } catch (Exception e) {
             System.out.println("[EXCEPTION] Erro ao criar os ficheiros: " + e);
         }
+    }
+    
+    public int getIdBarrel() {
+        return this.id;
+    }
+    public HashMap<Integer, Integer> getNPesquisas() {
+        return this.pesquisas;
     }
 }

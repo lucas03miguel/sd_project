@@ -14,7 +14,9 @@ public interface RMIBarrelInterface extends Remote{
     boolean alive() throws RemoteException;
     List<String> obterListaBarrels() throws RemoteException;
     HashMap<String, Integer> obterTopSearches() throws RemoteException;
-    HashMap<String, ArrayList<String>> pesquisarLinks(String s) throws RemoteException;
+    HashMap<String, ArrayList<String>> pesquisarLinks(String s, Barrel b) throws RemoteException;
+    HashMap<Integer, Integer> obterPesquisas() throws RemoteException;
+    int getId() throws RemoteException;
     /*
     
     ArrayList<String> checkUserRegistration(String username, String password, String firstName, String lastName) throws RemoteException;

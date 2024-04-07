@@ -7,6 +7,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.FileInputStream;
+import java.io.Serializable;
 import java.net.*;
 import java.rmi.Naming;
 import java.rmi.Remote;
@@ -15,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 
 
-public class Downloader extends Thread implements Remote {
+public class Downloader extends Thread implements Remote, Serializable {
     //private final String multicastAddress;
     private final int multicastPort;
     private final InetAddress group;

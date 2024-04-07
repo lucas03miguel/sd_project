@@ -14,10 +14,10 @@ import java.util.List;
  */
 public interface RMIBarrelInterface extends Remote{
     int selecionarBarrel() throws RemoteException;
+    
     HashMap<String, Integer> obterTopSearches(int id) throws RemoteException;
     
     HashMap<Integer, Integer> getNPesquisas() throws RemoteException;
-    
     boolean alive() throws RemoteException;
     List<String> obterListaBarrels() throws RemoteException;
     HashMap<String, ArrayList<String>> pesquisarLinks(String s, int id) throws RemoteException;

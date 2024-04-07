@@ -13,8 +13,6 @@ public interface RMIServerInterface extends Remote {
     List<String> obterListaBarrels() throws RemoteException;
     HashMap<String, Integer> getTopSearches() throws RemoteException;
     HashMap<String, Double> getAverageSearchTime() throws RemoteException;
-    
-    List<String> getDownloadersList() throws RemoteException;
     HashMap<String, ArrayList<String>> pesquisar(String s) throws RemoteException;
     boolean alive() throws RemoteException;
     

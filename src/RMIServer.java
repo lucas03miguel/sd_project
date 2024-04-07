@@ -14,23 +14,10 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-<<<<<<< HEAD
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Comparator;
-
-import java.util.Map;
-import java.util.stream.Collectors;
-=======
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
->>>>>>> 5cc19771e9724c1270fb67f7d0e1f97e48f391fb
-
 
 import static java.lang.Thread.sleep;
 
@@ -60,20 +47,20 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                 System.setProperty("java.rmi.server.hostname", rmiHost);
                 r.rebind(rmiRegistryName, this);
                 System.out.println("[SERVER] A correr em " + rmiHost + ":" + rmiPort + "->" + rmiRegistryName);
-            
+                
                 //meter cena dos barrels e tals
                 while (true) {
                     try {
                         this.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(barrelRMIHost, barrelRMIPort).lookup(barrelRMIRegistryName);
                         System.out.println("[SERVER] Got barrel registry on " + barrelRMIHost + ":" + barrelRMIPort + "->" + barrelRMIRegistryName);
-    
+                        
                         this.urlQueue = (URLQueueInterface) Naming.lookup(urlQueueRegistryName);
                         System.out.println("[SERVER] Got urlqueue registry on " + urlQueueRegistryName) ;
                         break;
                     } catch (NotBoundException | RemoteException e1) {
                         System.out.println("[EXCEPTION] NotBoundException | RemoteException, could not get barrel Registry: " + e1.getMessage());
                         System.out.println("Current barrel config: " + barrelRMIHost + ":" + barrelRMIPort + " " + barrelRMIRegistryName);
-                    
+                        
                         // Aguarda um segundo antes de tentar novamente
                         try {
                             Thread.sleep(1000);
@@ -82,7 +69,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                         }
                     }
                 }
-            
+                
                 run();
             } catch (Exception e) {
                 System.out.println("[EXCEPTION] Nao conseguiu criar registry. A tentar novamente num segundo...");
@@ -100,7 +87,6 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         }
         
     }
-    
     public void run() {
         try {
             System.out.println("[SERVER] Server preparado.");
@@ -207,27 +193,29 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
 
     @Override
-    public HashMap<String, Double> getAverageSearchTime() throws RemoteException {
-    HashMap<String, Double> averageSearchTimes = new HashMap<>();
-    for (String barrelName : searchDurations.keySet()) {
-        List<Long> durations = searchDurations.get(barrelName);
-        double averageTime = durations.stream().mapToLong(Long::longValue).average().orElse(0.0);
-        averageSearchTimes.put(barrelName, averageTime / 100.0); // Converter para décimos de segundo
-    }
-    return averageSearchTimes;
-}
-
-    @Override
-    public HashMap<String> getTopSearches() throws RemoteException {
-        // Ordena as pesquisas por contagem em ordem decrescente
+    public HashMap<String, Integer> getTopSearches() throws RemoteException {
+        return this.barrel.obterTopSearches();
+        
+        /*
         List<Map.Entry<String, Integer>> sortedSearches = new ArrayList<>(searchCounts.entrySet());
         sortedSearches.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
-
-        // Retorna as top 10 pesquisas
+        
         return sortedSearches.stream()
                 .limit(10)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
+         */
+    }
+    
+    @Override
+    public HashMap<String, Double> getAverageSearchTime() throws RemoteException {
+        HashMap<String, Double> averageSearchTimes = new HashMap<>();
+        for (String barrelName : searchDurations.keySet()) {
+            List<Long> durations = searchDurations.get(barrelName);
+            double averageTime = durations.stream().mapToLong(Long::longValue).average().orElse(0.0);
+            averageSearchTimes.put(barrelName, averageTime / 100.0); // Converter para décimos de segundo
+        }
+        return averageSearchTimes;
     }
     /*
     public void print_on_all_clients(String s) {

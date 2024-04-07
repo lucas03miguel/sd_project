@@ -154,19 +154,18 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
     /**
      * Método para obter o top 10 de pesquisas.
      *
-     * @param id id do barrel selecionado
      * @return hasmap com o top 10 de pesquisas
      * @throws RemoteException se ocorrer um erro durante a execução de um método remoto
      */
     @Override
     public HashMap<String, Integer> obterTopSearches(int id) throws RemoteException {
-        Barrel b = this.getBarrel(id);
-        if (b == null) {
+        Barrel barrel = this.getBarrel(id);
+        if (barrel == null) {
             HashMap<String, Integer> result = new HashMap<>();
             result.put("Erro", null);
             return result;
         }
-        return b.obterTopSearches();
+        return barrel.obterTopSearches();
     }
     
     /**

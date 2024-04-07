@@ -240,7 +240,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
 
     @Override
     public HashMap<String, Integer> getTopSearches() throws RemoteException {
-        int id = this.barrel.selecionarBarrel();
+        int id = barrel.selecionarBarrel();
         return this.barrel.obterTopSearches(id);
     }
     

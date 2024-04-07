@@ -270,10 +270,9 @@ public class Barrel extends Thread implements Serializable {
         
         try {
             criarFicheiros();
+            obterPesquisas();
             
             this.semSearch.acquire();
-            //long startTime = System.currentTimeMillis();
-            
             FileWriter fw = new FileWriter(searchsFile);
             if (!this.searchs.containsKey(palavra)) this.searchs.put(palavra, 1);
             else this.searchs.put(palavra, this.searchs.get(palavra) + 1);
@@ -384,7 +383,7 @@ public class Barrel extends Thread implements Serializable {
         return sortedLinks;
     }
     
-    public HashMap<String, Integer> obterTopSearches() {
+    private boolean obterPesquisas() {
         try {
             this.semSearch.acquire();
             BufferedReader fr = new BufferedReader(new FileReader(searchsFile));
@@ -393,7 +392,20 @@ public class Barrel extends Thread implements Serializable {
                 String[] parts = line.split(" ");
                 this.searchs.put(parts[0], Integer.parseInt(parts[1]));
             }
+            fr.close();
+            this.semSearch.release();
+            return true;
+        } catch (Exception e) {
+            this.semSearch.release();
+            System.out.println("[EXCEPTION] Erro ao obter as pesquisas: " + e);
+            return false;
+        }
+    }
     
+    public HashMap<String, Integer> obterTopSearches() {
+        try {
+            obterPesquisas();
+            
             List<Map.Entry<String, Integer>> list = new ArrayList<>(searchs.entrySet());
             list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
     
@@ -401,8 +413,6 @@ public class Barrel extends Thread implements Serializable {
             for (Map.Entry<String, Integer> entry : list)
                 sortedMap.put(entry.getKey(), entry.getValue());
             
-            fr.close();
-            this.semSearch.release();
             return sortedMap;
             
         } catch (Exception e) {

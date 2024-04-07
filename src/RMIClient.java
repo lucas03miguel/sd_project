@@ -97,9 +97,7 @@ public class RMIClient extends UnicastRemoteObject {
     public void run(){
         try {
             this.menu();
-        } catch (Exception e) {
-            System.out.println("[EXCEPTION] Exceção na main: " + e);
-        }
+        } catch (Exception ignored) {}
     }
     
     /**

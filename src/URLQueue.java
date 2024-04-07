@@ -14,11 +14,20 @@ import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * A classe URLQueue representa uma fila de URLs implementada como um serviço RMI.
+ * Esta permite inserir, remover e obter informações sobre os URLs na fila.
+ */
 public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
     private final BlockingQueue<String> urlQueue;
-    private URLQueueInterface queue;
     
-    
+    /**
+     * Construtor da classe URLQueue.
+     *
+     * @param urlQueueName o nome da fila de URLs no registro RMI
+     * @param urlQueuePort a porta do registro RMI
+     * @throws RemoteException se ocorrer um erro durante a criação do objeto remoto
+     */
     public URLQueue(String urlQueueName, int urlQueuePort) throws RemoteException {
         super();
         this.urlQueue = new LinkedBlockingQueue<>();
@@ -32,6 +41,11 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
         }
     }
     
+    /**
+     * Método principal para inicializar a fila de URLs.
+     *
+     * @param args os argumentos de linha de comando (não utilizados)
+     */
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
         Properties prop = new Properties();
@@ -50,12 +64,11 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
         }
     }
     
-    /*
-    @Override
-    public String takeLink() throws RemoteException {
-        return null;
-    }
-    
+    /**
+     * Formata uma URL adicionando "http://" ou "https://" e "www." se necessário.
+     *
+     * @param urlString a URL a ser formatada
+     * @return a URL formatada
      */
     public static String formatURL(String urlString) {
         if (!urlString.contains("http://") && !urlString.contains("https://")) {
@@ -69,6 +82,12 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
         return urlString;
     }
     
+    /**
+     * Verifica se uma URL é válida.
+     *
+     * @param url a URL a ser verificada
+     * @return true se a URL for válida, false caso contrário
+     */
     public static boolean isValidURL(String url) {
         try {
             new URL(url).toURI();
@@ -78,6 +97,13 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
         }
     }
     
+    /**
+     * Insere um link na fila de URLs.
+     *
+     * @param link o link a ser inserido
+     * @return uma mensagem indicando o resultado da operação
+     * @throws RemoteException se ocorrer um erro durante a chamada remota
+     */
     public String inserirLink(String link) throws RemoteException {
         String[] separacao = link.split("\\.");
         if (separacao.length < 2) return "URL invalido";
@@ -98,8 +124,12 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
         }
     }
     
-    
-    
+    /**
+     * Remove um link da fila de URLs.
+     *
+     * @param url o link a ser removido
+     * @throws RemoteException se ocorrer um erro durante a chamada remota
+     */
     public void removerLink(String url) throws RemoteException {
         try {
             boolean res = this.urlQueue.remove(url);
@@ -108,16 +138,34 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
         }
     }
     
+    /**
+     * Obtém o tamanho da fila de URLs.
+     *
+     * @return o tamanho da fila
+     * @throws RemoteException se ocorrer um erro durante a chamada remota
+     */
     @Override
     public int size() throws RemoteException{
         return this.urlQueue.size();
     }
     
+    /**
+     * Verifica se a fila de URLs está vazia.
+     *
+     * @return true se a fila estiver vazia, false caso contrário
+     * @throws RemoteException se ocorrer um erro durante a chamada remota
+     */
     @Override
     public boolean isEmpty() throws RemoteException {
         return this.urlQueue.isEmpty();
     }
     
+    /**
+     * Obtém a lista de URLs na fila.
+     *
+     * @return a lista de URLs
+     * @throws RemoteException se ocorrer um erro durante a chamada remota
+     */
     public List<String> getUrlQueue() throws RemoteException {
         return new ArrayList<>(urlQueue);
     }

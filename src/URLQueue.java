@@ -56,7 +56,7 @@ public class URLQueue extends UnicastRemoteObject implements URLQueueInterface {
     public static void main(String[] args) {
         System.getProperties().put("java.security.policy", "policy.all");
         Properties prop = new Properties();
-        String SETTINGS_PATH = "properties/configuration.properties";
+        String SETTINGS_PATH = "./properties/configuration.properties";
     
         try {
             prop.load(new FileInputStream(SETTINGS_PATH));

@@ -200,7 +200,14 @@ public class RMIClient extends UnicastRemoteObject {
                         case "4" -> {
                             // TODO: fucking lista dos downloaders
                             System.out.println("<----Lista dos downloaders---->");
-                            //serverInterface.downloadersList();
+                            try {
+                                List<String> downloadersList = serverInterface.getDownloadersList();
+                                for (String downloaderName : downloadersList) {
+                                    System.out.println(downloaderName);
+                                }
+                            } catch (RemoteException e) {
+                                System.out.println("[EXCEPTION] Erro ao obter a lista de downloaders: " + e);
+                            }
                             System.out.println("-----------------------------");
                         }
                         case "5" -> {

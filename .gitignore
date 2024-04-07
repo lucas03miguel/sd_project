@@ -2,7 +2,7 @@
 out
 .vscode
 src/*.class
-src/interfaces/*.class
+/interfaces/*.class
 src_teste/
 bin/
 META-INF/

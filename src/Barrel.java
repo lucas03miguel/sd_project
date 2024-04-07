@@ -121,8 +121,8 @@ public class Barrel extends Thread implements Serializable {
                             aux.add(texto);
                             this.webInfo.put(url, aux);
                         }
-                        System.out.println("titulo: " + titulo);
-                        System.out.println("chave: " + texto);
+                        //System.out.println("titulo: " + titulo);
+                        //System.out.println("chave: " + texto);
                         
                         updateInfo();
                     }
@@ -337,17 +337,17 @@ public class Barrel extends Thread implements Serializable {
             error.put("Nenhum", new ArrayList<>());
             return error;
         }
-        System.out.println("oiiii " + resp);
+        //System.out.println("oiiii " + resp);
     
         HashMap<String, Integer> linksRelevance = new HashMap<>();
         for(String link: resp.keySet()){
-            System.out.println("aaaaaaa");
-            System.out.println(resp.get(link));
-            System.out.println();
+            //System.out.println("aaaaaaa");
+            //System.out.println(resp.get(link));
+            //System.out.println();
             int relevancia = Integer.parseInt(resp.get(link).get(2));
             linksRelevance.put(link, relevancia);
         }
-        System.out.println("oooooooooooooooo" + linksRelevance);
+        //System.out.println("oooooooooooooooo" + linksRelevance);
         
         List<String> sortedKeys = new ArrayList<>(resp.keySet());
         sortedKeys.sort((a, b) -> linksRelevance.get(b) - linksRelevance.get(a));
@@ -356,9 +356,9 @@ public class Barrel extends Thread implements Serializable {
         for (String key : sortedKeys) {
             sortedLinks.put(key, resp.get(key));
         }
+        /*
         System.out.println(sortedLinks);
         
-        /*
         ArrayList<Map.Entry<String, ArrayList<String>>> list = new ArrayList<>(resp.entrySet());
     
         for (int i = 0; i < list.size() - 1; i++) {
@@ -427,7 +427,7 @@ public class Barrel extends Thread implements Serializable {
             if (!searchsFile.exists()) {
                 __ = searchsFile.createNewFile();
             }
-            System.out.println(__);
+            //System.out.println(__);
         } catch (Exception e) {
             System.out.println("[EXCEPTION] Erro ao criar os ficheiros: " + e);
         }

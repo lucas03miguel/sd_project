@@ -103,7 +103,7 @@ public class IndexStorageBarrels extends UnicastRemoteObject implements RMIBarre
             IndexStorageBarrels mainBarrel = new IndexStorageBarrels(0, rmiHost, rmiPort, rmiRegister, multPort, multAddress);
             
             int nBarrels = Integer.parseInt(prop.getProperty("N_BARRELS"));
-            for (int i = 1; i < nBarrels; i++) {
+            for (int i = 1; i < nBarrels + 1; i++) {
         
                 if (multAddress == null || multPort == 0) {
                     System.out.println("[BARREL " + i + "] Erro ao ler as propriedades do ficheiro de configuração.");

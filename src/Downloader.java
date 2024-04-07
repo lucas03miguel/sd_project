@@ -10,7 +10,9 @@ import java.io.FileInputStream;
 import java.io.Serializable;
 import java.net.*;
 import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 import java.text.Normalizer;
 import java.util.*;
 import java.util.concurrent.Semaphore;
@@ -22,7 +24,8 @@ public class Downloader extends Thread implements Remote {
     private final InetAddress group;
     private final MulticastSocket socket;
     private final int idDownloader;
-    private final URLQueueInterface urlQueue;
+    private final String urlQueueName;
+    private URLQueueInterface urlQueue;
     
     private final Semaphore sem;
     //private final HashMap<String, HashSet<WebPage>> index = new HashMap<>();
@@ -37,6 +40,7 @@ public class Downloader extends Thread implements Remote {
         this.group = InetAddress.getByName(multAddress);
         this.socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkInterface.getByIndex(0));
         this.urlQueue = (URLQueueInterface) Naming.lookup(URLQueueName);
+        this.urlQueueName = URLQueueName;
     
         System.out.println("Downloader " + id + " criado com sucesso");
         
@@ -97,6 +101,11 @@ public class Downloader extends Thread implements Remote {
                 }
             } catch (Exception e) {
                 System.out.println("[DOWNLOADER] Erro 1: " + e);
+                try {
+                    this.urlQueue = (URLQueueInterface) Naming.lookup(urlQueueName);
+                } catch (NotBoundException | MalformedURLException | RemoteException ex) {
+                    System.out.println("[DOWNLOADER] Erro ao procurar URLQueue: " + ex);
+                }
             }
         }
     }
@@ -232,7 +241,19 @@ public class Downloader extends Thread implements Remote {
                 if (!Links.contains(linkUrl)) {
                     linkUrl = linkUrl.replaceAll("[\n;|]+", "");
                     Links.add(linkUrl);
-                    urlQueue.inserirLink(linkUrl);
+                    boolean linkInserido = false;
+                    while (!linkInserido) {
+                        try {
+                            urlQueue.inserirLink(linkUrl);
+                            linkInserido = true;
+                        } catch (RemoteException e) {
+                            System.out.println("[DOWNLOADER] Erro ao inserir link na fila: " + e);
+                            System.out.println("[DOWNLOADER] Tentando novamente...");
+                            this.urlQueue = (URLQueueInterface) Naming.lookup(urlQueueName);
+                            
+                        }
+                    }
+    
                 }
             }
             

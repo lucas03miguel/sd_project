@@ -33,7 +33,7 @@ public class RMIClient extends UnicastRemoteObject {
                 break;
             } catch (Exception e) {
                 System.out.println("[CLIENT] Erro ao conectar ao servidor: " + e);
-                sleep(1000);
+                sleep(2000);
             }
         }
         run();
@@ -91,10 +91,12 @@ public class RMIClient extends UnicastRemoteObject {
         System.out.print("Opção: ");
     }
     
-    private void menu() {
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
-            int userType = 0;
-            while (true) {
+    private void menu() throws InterruptedException {
+        int userType = 0;
+        BufferedReader br;
+        while (true) {
+            try {
+                br = new BufferedReader(new InputStreamReader(System.in));
                 if (userType == 0) {
                     printMenu(userType);
                     String choice = br.readLine();
@@ -138,8 +140,14 @@ public class RMIClient extends UnicastRemoteObject {
                                 System.out.print("Pesquisa inválida (1+ carateres): ");
                                 searchQuery = br.readLine();
                             }
-                            HashMap<String, ArrayList<String>> resp = serverInterface.pesquisar(searchQuery);
-                            
+                            HashMap<String, ArrayList<String>> resp = new HashMap<>();
+                            try {
+                                resp = serverInterface.pesquisar(searchQuery);
+                            } catch (RemoteException e) {
+                                System.out.println("Erro ao pesquisar palavra. Tente novamente");
+                                serverErrorHandling();
+                                continue;
+                            }
                             if (resp.containsKey("Erro")  || resp.containsKey("Nenhum")) {
                                 System.out.println("Nenhum resultado encontrado.");
                                 //continue;
@@ -237,12 +245,19 @@ public class RMIClient extends UnicastRemoteObject {
                         default -> System.out.println("Escolha errada");
                     }
                 }
+                
+            } catch (Exception e) {
+                System.out.println("[EXCEPTION] Exceção na main: " + e);
+                System.out.println("adeus");
+                e.printStackTrace();
+                serverErrorHandling();
+                //System.exit(-1);
             }
-        } catch (Exception e) {
-            System.out.println("[EXCEPTION] Exceção na main: " + e);
-            System.out.println("adeus");
-            e.printStackTrace();
-            System.exit(-1);
+        }
+        try {
+            br.close();
+        } catch (IOException e) {
+            System.out.println("[EXCEPTION] Erro ao fechar o buffer: " + e);
         }
     }
     
@@ -371,19 +386,19 @@ public class RMIClient extends UnicastRemoteObject {
     }
     */
     
-    private void serverErrorHandling() {
-        System.out.println("[EXCEPTION] Não conseguiu conectar ao server.");
+    private void serverErrorHandling() throws InterruptedException {
+        //System.out.println("[EXCEPTION] Não conseguiu conectar ao server.");
         while (true) {
             try {
-                System.out.println("[CLIENT] Tentando reconectar...");
+                System.out.println("[CLIENT] Tentando reconectar ao server...");
                 //Thread.sleep(keepAliveTime);
                 serverInterface = (RMIServerInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
                 
                 System.out.println("[CLIENT] Reconectado!");
-                this.menu();
                 break;
             } catch (Exception e) {
                 System.out.println("[EXCEPTION] Nao conseguiu conectar ao server: " + e);
+                sleep(1000);
             }
         }
     }

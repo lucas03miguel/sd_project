@@ -5,6 +5,7 @@ import interfaces.RMIServerInterface;
 import interfaces.URLQueueInterface;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +20,7 @@ import java.util.*;
 import static java.lang.Thread.sleep;
 
 public class RMIServer extends UnicastRemoteObject implements RMIServerInterface {
+    private final String urlName;
     private RMIServerInterface hPrincipal;
     private HashMap<String, Integer> searchCounts = new HashMap<>();
     private HashMap<String, List<Long>> searchDurations = new HashMap<>();
@@ -39,6 +41,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         this.barrelRMIRegistryName = barrelRMIRegistryName;
         this.hPrincipal = null;
         this.temposMedios = new HashMap<>();
+        this.urlName = urlQueueRegistryName;
         
         while (true) {
             try {
@@ -64,7 +67,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException e2) {
-                            e2.printStackTrace();
+                            System.out.println("[EXCEPTION] InterruptedException: " + e2);
                         }
                     }
                 }
@@ -80,7 +83,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
                     System.out.println("[EXCEPTION] " + e2);
                     return;
                 } catch (RemoteException ex) {
-                    throw new RuntimeException(ex);
+                    System.out.println("[EXCEPTION] RemoteException, could not create registry. Retrying in 1 second...");
                 }
             }
         }
@@ -92,6 +95,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
             while (true) ;
         } catch (Exception re) {
             System.out.println("Exception in RMIServer.main: " + re);
+            
         }
     }
     
@@ -116,37 +120,33 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     }
     
     public boolean alive() throws RemoteException {
-        return true;
+        try {
+            return true;
+        } catch (Exception e) {
+            System.out.println("[EXCEPTION] " + e);
+            return false;
+        }
     }
     
     public void tentarNovamente(String rmiHost, int rmiPort, String rmiRegistryName) throws NotBoundException, RemoteException, InterruptedException {
         while (true) {
             try {
-                // check if server is alive
-                assert this.hPrincipal != null;
-                if (this.hPrincipal.alive()) {
+                if (this.barrel.alive()) {
                     System.out.println("[BARREL] Barrel is alive.");
                 }
-            } catch (RemoteException e) {
-                System.out.println("[BARREL] Getting connection...");
+            } catch (Exception e) {
+                System.out.println("[SERVER] Getting connection...");
                 
-                for (int i = 0; i < 10; i++) {
-                    try {
-                        Thread.sleep(1000);
-                        this.hPrincipal = (RMIServerInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
-                        break;
-                    } catch (RemoteException er) {
-                        System.out.println("[EXCEPTION] RemoteException, could not create registry. Retrying in 1 second...");
-                        this.hPrincipal = null;
-                    } catch (InterruptedException ei) {
-                        System.out.println("[EXCEPTION] InterruptedException");
-                        ei.printStackTrace();
-                        return;
-                    } catch (NotBoundException en) {
-                        System.out.println("[EXCEPTION] NotBoundException");
-                        en.printStackTrace();
-                        return;
-                    }
+                try {
+                    Thread.sleep(1000);
+                    this.barrel = (RMIBarrelInterface) LocateRegistry.getRegistry(rmiHost, rmiPort).lookup(rmiRegistryName);
+                    break;
+                } catch (InterruptedException | NotBoundException ei) {
+                    System.out.println("[EXCEPTION] InterruptedException: " + ei);
+                    return;
+                } catch (Exception er) {
+                    System.out.println("[EXCEPTION] RemoteException, could not create registry. Retrying in 1 second...");
+                    this.hPrincipal = null;
                 }
             }
         }
@@ -155,12 +155,42 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
     @Override
     public String indexar(String url) throws RemoteException {
         System.out.println("[SERVER] Adicionando url à queue: " + url);
-        String res = this.urlQueue.inserirLink(url);
-        if (res.equals("URL valido")) System.out.println(this.urlQueue.getUrlQueue());
-        else System.out.println(res);
+        
+        boolean urlInserido = false;
+        String res = "";
+        
+        while (!urlInserido) {
+            try {
+                res = this.urlQueue.inserirLink(url);
+                urlInserido = true;
+            } catch (RemoteException e) {
+                System.out.println("[SERVER] Erro ao inserir URL na fila: " + e);
+                System.out.println("[SERVER] Tentando reconectar à fila de URLs...");
+                
+                // Tenta reconectar à fila de URLs
+                boolean reconectado = false;
+                while (!reconectado) {
+                    try {
+                        this.urlQueue = (URLQueueInterface) Naming.lookup(urlName);
+                        System.out.println("[SERVER] Reconectado à fila de URLs!");
+                        reconectado = true;
+                    } catch (RemoteException | NotBoundException | MalformedURLException ex) {
+                        System.out.println("[SERVER] Erro ao reconectar à fila de URLs: " + ex);
+                        System.out.println("[SERVER] Tentando novamente em 1 segundo...");
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ie) {
+                            ie.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println(res);
         
         return res;
     }
+    
     
     @Override
     public HashMap<Integer, Double> obterTempos() throws RemoteException {
@@ -175,27 +205,40 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         HashMap<String, ArrayList<String>> aux = new HashMap<>();
         HashMap<Integer, Double> tempos = new HashMap<>();
         for (String palavra : palavras) {
-            int idBarrelEscolhido = this.barrel.selecionarBarrel();
-            startTime = System.currentTimeMillis();
-            aux = barrel.pesquisarLinks(palavra, idBarrelEscolhido);
-            endTime = System.currentTimeMillis();
-            
-            double tempo = (double) (endTime - startTime);
-            if (!tempos.containsKey(idBarrelEscolhido)) tempos.put(idBarrelEscolhido, tempo);
-            else tempos.put(idBarrelEscolhido, tempos.get(idBarrelEscolhido) + tempo);
+            boolean pesquisaRealizada = false;
+            while (!pesquisaRealizada) {
+                try {
+                    int idBarrelEscolhido = this.barrel.selecionarBarrel();
+                    startTime = System.currentTimeMillis();
+                    aux = barrel.pesquisarLinks(palavra, idBarrelEscolhido);
+                    endTime = System.currentTimeMillis();
+                    pesquisaRealizada = true;
+                
+                    double tempo = (double) (endTime - startTime);
+                    if (!tempos.containsKey(idBarrelEscolhido)) tempos.put(idBarrelEscolhido, tempo);
+                    else tempos.put(idBarrelEscolhido, tempos.get(idBarrelEscolhido) + tempo);
+                } catch (RemoteException e) {
+                    System.out.println("[EXCEPTION] Erro: " + e);
+                    try {
+                        tentarNovamente(barrelRMIHost, barrelRMIPort, barrelRMIRegistryName);
+                    } catch (Exception ex) {
+                        System.out.println("[EXCEPTION] Erro: " + ex);
+                    }
+                }
+            }
         }
-        
-        
+    
         for (Integer id: tempos.keySet()) {
             temposMedios.put(id, tempos.get(id) / palavras.length);
         }
-        
+    
         for (String url : aux.keySet()) {
             if (resp.containsKey(url)) resp.get(url).addAll(aux.get(url));
             else resp.put(url, aux.get(url));
         }
         return resp;
     }
+    
     
     @Override
     public List<String> obterListaBarrels() throws RemoteException {
@@ -236,9 +279,9 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerInterface
         if (!Files.exists(dirPath)) {
             try {
                 Files.createDirectories(dirPath);
-                System.out.println("Diretório de users criado: " + dirPath);
+                System.out.println("Base de dados criada: " + dirPath);
             } catch (Exception e) {
-                System.err.println("Erro ao criar o diretório de users: " + e);
+                System.err.println("Erro ao criar a base de dados: " + e);
                 return -1;
             }
         }
